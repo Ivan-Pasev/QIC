@@ -17,10 +17,11 @@ def test_constitution_snapshot_is_immutable() -> None:
         raise AssertionError("constitutional snapshot must be immutable")
 
 
-def test_maturity_order_is_conservative() -> None:
-    assert Maturity.IMPLEMENTED.can_claim(Maturity.CONCEPTUAL)
-    assert not Maturity.IMPLEMENTED.can_claim(Maturity.TESTED)
-    assert Maturity.HARDWARE_TESTED > Maturity.SIMULATED
+def test_maturity_labels_are_non_cumulative() -> None:
+    assert Maturity.IMPLEMENTED.supports(Maturity.IMPLEMENTED)
+    assert not Maturity.IMPLEMENTED.supports(Maturity.TESTED)
+    assert not Maturity.SIMULATED.supports(Maturity.FORMALLY_MODELED)
+    assert not Maturity.FORMALLY_MODELED.supports(Maturity.SIMULATED)
 
 
 def test_prime_boundary_laws_are_present() -> None:
