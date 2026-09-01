@@ -1,27 +1,33 @@
-"""Explicit public maturity labels for QIC artifacts and claims."""
+"""Explicit, non-cumulative public maturity labels for QIC claims."""
 
 from __future__ import annotations
 
-from enum import IntEnum
+from enum import Enum
 
 
-class Maturity(IntEnum):
-    """Ordered evidence maturity used for public capability claims.
+class Maturity(str, Enum):
+    """Evidence/maturity labels used by public QIC claims.
 
-    Ordering is conservative and only supports comparisons. Moving an artifact
-    upward still requires explicit evidence; the enum itself does not grant it.
+    These labels are intentionally *not* ordered. For example, SIMULATED does
+    not imply FORMALLY_MODELED, and FORMALLY_MODELED does not imply TESTED or
+    HARDWARE_TESTED. A future evidence profile may carry multiple labels when
+    independently supported.
     """
 
-    CONCEPTUAL = 0
-    IMPLEMENTED = 1
-    TESTED = 2
-    FORMALLY_MODELED = 3
-    SIMULATED = 4
-    HARDWARE_TESTED = 5
-    DEPLOYED = 6
-    INDEPENDENTLY_REPLICATED = 7
+    CONCEPTUAL = "CONCEPTUAL"
+    IMPLEMENTED = "IMPLEMENTED"
+    TESTED = "TESTED"
+    FORMALLY_MODELED = "FORMALLY_MODELED"
+    SIMULATED = "SIMULATED"
+    HARDWARE_TESTED = "HARDWARE_TESTED"
+    DEPLOYED = "DEPLOYED"
+    INDEPENDENTLY_REPLICATED = "INDEPENDENTLY_REPLICATED"
 
-    def can_claim(self, requested: "Maturity") -> bool:
-        """Return whether this evidence level is at least the requested level."""
+    def supports(self, requested: "Maturity") -> bool:
+        """Conservatively support only the exact evidenced label.
 
-        return self >= requested
+        Cross-label implication is deliberately forbidden at G0. Later evidence
+        profiles may explicitly carry several supported labels.
+        """
+
+        return self is requested
