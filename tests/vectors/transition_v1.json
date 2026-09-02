@@ -1,0 +1,21 @@
+{
+  "state": {
+    "revision": 0,
+    "entries": [["counter", "0"]],
+    "sha256": "4b6e70f26ea0336f48e3fbd71afcc5979f08f9c642b088a6777d8c7d16b44198"
+  },
+  "proposal": {
+    "proposal_id": "proposal-001",
+    "actor": "worker",
+    "operation": "state.increment",
+    "expected_state_digest": "4b6e70f26ea0336f48e3fbd71afcc5979f08f9c642b088a6777d8c7d16b44198",
+    "payload": [["key", "counter"]]
+  },
+  "proposal_canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"dataclass\",\"class\":\"qic.core.transition.TransitionProposal\",\"fields\":{\"actor\":{\"$type\":\"str\",\"value\":\"worker\"},\"expected_state_digest\":{\"$type\":\"str\",\"value\":\"4b6e70f26ea0336f48e3fbd71afcc5979f08f9c642b088a6777d8c7d16b44198\"},\"operation\":{\"$type\":\"str\",\"value\":\"state.increment\"},\"payload\":{\"$type\":\"tuple\",\"items\":[{\"$type\":\"tuple\",\"items\":[{\"$type\":\"str\",\"value\":\"key\"},{\"$type\":\"str\",\"value\":\"counter\"}]}]},\"proposal_id\":{\"$type\":\"str\",\"value\":\"proposal-001\"}}}}",
+  "proposal_sha256": "40517df06fd9867593465fc9b16b66040f235ce16ee82909d13689f1f0f33af1",
+  "outcome": {
+    "after_revision": 1,
+    "after_entries": [["counter", "1"]],
+    "sha256": "6668831dd41bce645b37b684f1924ce36e2f8f86535162bc752a22f5c3763ddf"
+  }
+}
