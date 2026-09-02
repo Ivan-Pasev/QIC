@@ -44,6 +44,12 @@ from .maturity_vector import (
     SemanticMaturity,
 )
 from .ontology import ROOT_ONTOLOGY, RootOntology, ontology_from_id
+from .recovery import (
+    DurableArtifactView,
+    ReconciliationClass,
+    ReconciliationResult,
+    reconcile_recovery,
+)
 from .transition import (
     ENABLED_FAMILIES,
     FAMILY_AUTHORITY,
@@ -72,6 +78,7 @@ __all__ = [
     "ConstitutionSnapshot",
     "DeploymentMaturity",
     "DigestDomainError",
+    "DurableArtifactView",
     "ENABLED_FAMILIES",
     "EvidenceBinding",
     "EvidenceClass",
@@ -97,6 +104,8 @@ __all__ = [
     "MaturityVector",
     "PRIME_LAWS",
     "ROOT_ONTOLOGY",
+    "ReconciliationClass",
+    "ReconciliationResult",
     "RecoveryAssessment",
     "RecoveryClass",
     "RootOntology",
@@ -117,4 +126,5 @@ __all__ = [
     "digest_hex",
     "journal_phase_successors",
     "ontology_from_id",
+    "reconcile_recovery",
 ]
