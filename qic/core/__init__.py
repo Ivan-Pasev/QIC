@@ -19,6 +19,17 @@ from .maturity_vector import (
     SemanticMaturity,
 )
 from .ontology import ROOT_ONTOLOGY, RootOntology, ontology_from_id
+from .transition import (
+    ENABLED_FAMILIES,
+    FAMILY_AUTHORITY,
+    StateSnapshot,
+    TransitionEngine,
+    TransitionFailure,
+    TransitionFamily,
+    TransitionOutcome,
+    TransitionProposal,
+    TransitionSpec,
+)
 
 __all__ = [
     "AuthorityDomain",
@@ -30,7 +41,9 @@ __all__ = [
     "ConstitutionSnapshot",
     "DeploymentMaturity",
     "DigestDomainError",
+    "ENABLED_FAMILIES",
     "EvidenceMaturity",
+    "FAMILY_AUTHORITY",
     "FormalMaturity",
     "GrantState",
     "HardwareMaturity",
@@ -40,6 +53,13 @@ __all__ = [
     "ROOT_ONTOLOGY",
     "RootOntology",
     "SemanticMaturity",
+    "StateSnapshot",
+    "TransitionEngine",
+    "TransitionFailure",
+    "TransitionFamily",
+    "TransitionOutcome",
+    "TransitionProposal",
+    "TransitionSpec",
     "canonical_bytes",
     "canonical_text",
     "digest_bytes",
