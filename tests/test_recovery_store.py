@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+import qic.core.recovery_store as recovery_store_module
 from qic.core import (
     JournalConflictError,
     JournalCorruptionError,
@@ -45,19 +46,18 @@ def journal_chain() -> tuple[JournalRecord, ...]:
     return p0, p1, p2, p3, p4, p5
 
 
-def bundle_for(record: JournalRecord) -> RecoveryEvidenceBundle:
+def bundle_for(record: JournalRecord, *, state_digest: str | None = None) -> RecoveryEvidenceBundle:
     if record.phase in {JournalPhase.PREPARED, JournalPhase.VALIDATED}:
-        return RecoveryEvidenceBundle(
-            transaction_id=record.transaction_id,
-            journal_sequence=record.sequence,
-            journal_head_digest=record.digest,
-            state_digest=record.before_state_digest,
-        )
+        state = record.before_state_digest
+    else:
+        state = record.after_state_digest or "missing"
+    if state_digest is not None:
+        state = state_digest
     return RecoveryEvidenceBundle(
         transaction_id=record.transaction_id,
         journal_sequence=record.sequence,
         journal_head_digest=record.digest,
-        state_digest=record.after_state_digest or "missing",
+        state_digest=state,
         outcome_digest=record.outcome_digest,
         chrono_event_digest=record.chrono_event_digest,
         witness_digest=record.witness_digest,
@@ -79,15 +79,33 @@ def test_conflicting_bundle_for_same_journal_sequence_is_rejected(tmp_path: Path
     record = journal_chain()[2]
     bundle = bundle_for(record)
     store.put(bundle)
-    conflict = RecoveryEvidenceBundle(
-        transaction_id=bundle.transaction_id,
-        journal_sequence=bundle.journal_sequence,
-        journal_head_digest=bundle.journal_head_digest,
-        state_digest="different-state",
-        outcome_digest=bundle.outcome_digest,
-    )
+    conflict = bundle_for(record, state_digest="different-state")
     with pytest.raises(JournalConflictError):
         store.put(conflict)
+
+
+def test_concurrent_conflicting_bundle_promotion_never_overwrites_winner(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    record = journal_chain()[2]
+    desired = bundle_for(record, state_digest="desired-state")
+    competing = bundle_for(record, state_digest="competing-state")
+
+    staging = RecoveryEvidenceStore(tmp_path / "staging")
+    competing_bytes = staging.put(competing).read_bytes()
+    original_promote = recovery_store_module._promote_no_replace
+
+    def inject_winner(temporary: Path, target: Path) -> None:
+        target.write_bytes(competing_bytes)
+        original_promote(temporary, target)
+
+    monkeypatch.setattr(recovery_store_module, "_promote_no_replace", inject_winner)
+    root = tmp_path / "evidence"
+    store = RecoveryEvidenceStore(root)
+    with pytest.raises(JournalConflictError, match="concurrent recovery evidence promotion"):
+        store.put(desired)
+
+    assert RecoveryEvidenceStore(root).load("tx-bundle", 2) == competing
 
 
 def test_bundle_tamper_is_detected(tmp_path: Path) -> None:
