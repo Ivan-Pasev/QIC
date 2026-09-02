@@ -32,6 +32,16 @@ def _normalize(value: Any) -> Any:
     if value is None:
         return {"$type": "null"}
 
+    # Enum must precede scalar subtype checks because IntEnum/StrEnum members
+    # are also instances of int/str. QIC preserves their declared enum identity.
+    if isinstance(value, Enum):
+        return {
+            "$type": "enum",
+            "class": _type_name(value),
+            "name": value.name,
+            "value": _normalize(value.value),
+        }
+
     if isinstance(value, bool):
         return {"$type": "bool", "value": value}
 
@@ -50,14 +60,6 @@ def _normalize(value: Any) -> Any:
 
     if isinstance(value, bytes):
         return {"$type": "bytes", "hex": value.hex()}
-
-    if isinstance(value, Enum):
-        return {
-            "$type": "enum",
-            "class": _type_name(value),
-            "name": value.name,
-            "value": _normalize(value.value),
-        }
 
     if is_dataclass(value) and not isinstance(value, type):
         return {
