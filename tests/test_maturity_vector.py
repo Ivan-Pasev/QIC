@@ -18,6 +18,9 @@ from qic.core import (
 )
 
 
+ROOT = Path(__file__).parents[1]
+
+
 def test_root_ontology_is_exactly_seven_stable_classes() -> None:
     assert tuple(item.name for item in ROOT_ONTOLOGY) == (
         "STATE",
@@ -29,6 +32,29 @@ def test_root_ontology_is_exactly_seven_stable_classes() -> None:
         "WITNESS",
     )
     assert ontology_from_id("qic:ontology:STATE") is RootOntology.STATE
+
+
+def test_root_ontology_registry_matches_runtime() -> None:
+    payload = json.loads((ROOT / "registry" / "root_ontology.json").read_text(encoding="utf-8"))
+    registry = [(item["name"], item["id"]) for item in payload["classes"]]
+    runtime = [(item.name, item.value) for item in ROOT_ONTOLOGY]
+    assert registry == runtime
+
+
+def test_maturity_vector_schema_matches_runtime_enums() -> None:
+    payload = json.loads((ROOT / "schemas" / "maturity-vector.schema.json").read_text(encoding="utf-8"))
+    properties = payload["properties"]
+    expected = {
+        "semantic": [item.name for item in SemanticMaturity],
+        "evidence": [item.name for item in EvidenceMaturity],
+        "formal": [item.name for item in FormalMaturity],
+        "hardware": [item.name for item in HardwareMaturity],
+        "deployment": [item.name for item in DeploymentMaturity],
+    }
+    assert set(payload["required"]) == set(expected)
+    assert set(properties) == set(expected)
+    for dimension, names in expected.items():
+        assert properties[dimension]["enum"] == names
 
 
 def test_simulated_hardware_does_not_imply_formal_maturity() -> None:
