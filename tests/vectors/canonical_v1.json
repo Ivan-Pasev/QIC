@@ -1,0 +1,50 @@
+{
+  "schema": "qic.tests.canonical-vectors.v1",
+  "canonical_version": "QIC-CANONICAL/1.0",
+  "digest_version": "QIC-DIGEST/1.0",
+  "digest_domain": "qic.test.vector",
+  "vectors": [
+    {
+      "name": "null",
+      "input_kind": "null",
+      "canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"null\"}}",
+      "sha256": "a4b40800092f6e7fb5afa5033ac7a286c2bc0adb2d0911613871e76d4addd506"
+    },
+    {
+      "name": "bool_true",
+      "input_kind": "bool_true",
+      "canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"bool\",\"value\":true}}",
+      "sha256": "8d68f3bd865b6bccaa2c35f232d1e96a6a7b86119ebfa11c47e5d78105c4176b"
+    },
+    {
+      "name": "int_42",
+      "input_kind": "int_42",
+      "canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"int\",\"value\":\"42\"}}",
+      "sha256": "00be358627ce58faab41605dc73332fc506cc3e814e976da60188b018a9130dd"
+    },
+    {
+      "name": "string_qic",
+      "input_kind": "string_qic",
+      "canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"str\",\"value\":\"QIC\"}}",
+      "sha256": "0a9b9f4c0560f6aaf1983bb3a5e2ae8446922daa60fc6e1f4fadabf66af5a6ee"
+    },
+    {
+      "name": "nested_mapping",
+      "input_kind": "nested_mapping",
+      "canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"mapping\",\"items\":{\"a\":{\"$type\":\"list\",\"items\":[{\"$type\":\"int\",\"value\":\"1\"},{\"$type\":\"bool\",\"value\":true},{\"$type\":\"null\"}]},\"b\":{\"$type\":\"int\",\"value\":\"2\"}}}}",
+      "sha256": "43aad9ccae7e5d8d5d6dadc6c11c23fac4c2a48f70318f6e50cc781685cabec3"
+    },
+    {
+      "name": "unordered_set",
+      "input_kind": "unordered_set",
+      "canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"set\",\"items\":[{\"$type\":\"str\",\"value\":\"alpha\"},{\"$type\":\"str\",\"value\":\"beta\"}]}}",
+      "sha256": "c0d6393336f8fd5fe887a5253980ccf18cace9818200f778b3889953b13424c1"
+    },
+    {
+      "name": "typed_tuple",
+      "input_kind": "typed_tuple",
+      "canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"tuple\",\"items\":[{\"$type\":\"int\",\"value\":\"1\"},{\"$type\":\"str\",\"value\":\"x\"}]}}",
+      "sha256": "3005ef3b1f17bdb7fca11a5ab46a43634d24fdba9c2e06b00edb85aeabae5763"
+    }
+  ]
+}
