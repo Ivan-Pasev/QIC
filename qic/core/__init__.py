@@ -7,6 +7,7 @@ from .canonical import (
     canonical_bytes,
     canonical_text,
 )
+from .chrono import ChronoChain, ChronoEvent, ChronoEventType, WitnessRecord, WitnessSubject
 from .constitution import PRIME_LAWS, ConstitutionSnapshot
 from .digest import DIGEST_VERSION, DigestDomainError, digest_bytes, digest_hex
 from .maturity import Maturity
@@ -36,6 +37,9 @@ __all__ = [
     "AuthorityGrant",
     "AuthorityRequirement",
     "CANONICAL_VERSION",
+    "ChronoChain",
+    "ChronoEvent",
+    "ChronoEventType",
     "DIGEST_VERSION",
     "CanonicalizationError",
     "ConstitutionSnapshot",
@@ -60,6 +64,8 @@ __all__ = [
     "TransitionOutcome",
     "TransitionProposal",
     "TransitionSpec",
+    "WitnessRecord",
+    "WitnessSubject",
     "canonical_bytes",
     "canonical_text",
     "digest_bytes",
