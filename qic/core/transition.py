@@ -118,6 +118,8 @@ class TransitionSpec:
             isinstance(item, str) and item for item in self.invariant_ids
         ):
             raise TypeError("invariant_ids must be a tuple of non-empty strings")
+        if len(self.invariant_ids) != len(set(self.invariant_ids)):
+            raise ValueError("invariant_ids must be unique")
         required_domain = FAMILY_AUTHORITY[self.family]
         if required_domain is not None and required_domain not in self.authority.domains:
             raise ValueError(
@@ -180,12 +182,26 @@ class TransitionOutcome:
     def __post_init__(self) -> None:
         if type(self.accepted) is not bool:
             raise TypeError("accepted must be bool")
+        if self.failure is not None and not isinstance(self.failure, TransitionFailure):
+            raise TypeError("failure must be TransitionFailure or None")
+        if not isinstance(self.proposal_digest, str) or not self.proposal_digest:
+            raise ValueError("proposal_digest must be a non-empty string")
+        if not isinstance(self.before_state, StateSnapshot) or not isinstance(
+            self.after_state, StateSnapshot
+        ):
+            raise TypeError("before_state and after_state must be StateSnapshot values")
+        if self.failed_invariant is not None and (
+            not isinstance(self.failed_invariant, str) or not self.failed_invariant
+        ):
+            raise TypeError("failed_invariant must be a non-empty string or None")
         if self.accepted and self.failure is not None:
             raise ValueError("accepted outcome cannot carry a failure")
         if not self.accepted and self.failure is None:
             raise ValueError("rejected outcome must carry a failure")
         if self.accepted and self.failed_invariant is not None:
             raise ValueError("accepted outcome cannot carry failed_invariant")
+        if not self.accepted and self.after_state is not self.before_state:
+            raise ValueError("rejected outcome must preserve the exact before_state object")
 
     @property
     def before_digest(self) -> str:
@@ -215,8 +231,29 @@ class TransitionEngine:
         invariants: dict[str, Invariant] | None = None,
         global_invariant_ids: tuple[str, ...] = (),
     ) -> None:
-        if not isinstance(specs, tuple):
-            raise TypeError("specs must be a tuple")
+        if not isinstance(specs, tuple) or not all(
+            isinstance(spec, TransitionSpec) for spec in specs
+        ):
+            raise TypeError("specs must be a tuple of TransitionSpec values")
+        if not isinstance(rules, dict) or not all(
+            isinstance(name, str) and callable(rule) for name, rule in rules.items()
+        ):
+            raise TypeError("rules must be a dict of operation names to callables")
+        if invariants is not None and (
+            not isinstance(invariants, dict)
+            or not all(
+                isinstance(name, str) and callable(invariant)
+                for name, invariant in invariants.items()
+            )
+        ):
+            raise TypeError("invariants must be a dict of invariant ids to callables")
+        if not isinstance(global_invariant_ids, tuple) or not all(
+            isinstance(item, str) and item for item in global_invariant_ids
+        ):
+            raise TypeError("global_invariant_ids must be a tuple of non-empty strings")
+        if len(global_invariant_ids) != len(set(global_invariant_ids)):
+            raise ValueError("global_invariant_ids must be unique")
+
         self._specs = {spec.operation: spec for spec in specs}
         if len(self._specs) != len(specs):
             raise ValueError("transition operation names must be unique")
@@ -224,8 +261,6 @@ class TransitionEngine:
             raise ValueError("rules must exist for exactly the declared operations")
         self._rules = dict(rules)
         self._invariants = dict(invariants or {})
-        if not isinstance(global_invariant_ids, tuple):
-            raise TypeError("global_invariant_ids must be a tuple")
         for invariant_id in global_invariant_ids:
             if invariant_id not in self._invariants:
                 raise ValueError(f"unknown global invariant: {invariant_id}")
@@ -268,6 +303,8 @@ class TransitionEngine:
             return _reject(TransitionFailure.RULE_REJECTED, state, proposal)
         if not isinstance(candidate, StateSnapshot):
             raise TypeError("transition rules must return StateSnapshot or None")
+        if candidate.revision != state.revision + 1:
+            return _reject(TransitionFailure.RULE_REJECTED, state, proposal)
 
         for invariant_id in (*self._global_invariant_ids, *spec.invariant_ids):
             invariant = self._invariants[invariant_id]
