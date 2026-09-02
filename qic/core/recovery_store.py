@@ -199,6 +199,7 @@ class RecoveryEvidenceStore:
             except FileExistsError:
                 durable = self.load(bundle.transaction_id, bundle.journal_sequence)
                 if durable == bundle:
+                    temporary.unlink(missing_ok=True)
                     return target
                 raise JournalConflictError(
                     "concurrent recovery evidence promotion created different content"
