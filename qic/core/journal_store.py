@@ -225,6 +225,7 @@ class JournalFileStore:
             except FileExistsError:
                 durable = _read_record_path(target, context="concurrent durable target")
                 if durable == record:
+                    temporary.unlink(missing_ok=True)
                     return target
                 raise JournalConflictError(
                     "concurrent journal promotion created different content"
