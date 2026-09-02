@@ -23,6 +23,7 @@ from .journal_store import (
     JournalCorruptionError,
     _fsync_directory,
     _promote_no_replace,
+    _unique_temp_path,
 )
 from .recovery import (
     DurableArtifactView,
@@ -187,7 +188,7 @@ class RecoveryEvidenceStore:
                 "recovery evidence already exists for journal sequence with different content"
             )
 
-        temporary = target.with_suffix(".json.tmp")
+        temporary = _unique_temp_path(target)
         try:
             with temporary.open("xb") as handle:
                 handle.write(_encoded(bundle))
