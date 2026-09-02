@@ -6,14 +6,19 @@
   "additionalProperties": false,
   "required": ["grant_id", "subject", "issuer", "domains", "capabilities", "resources", "state", "parent_grant_id"],
   "properties": {
-    "grant_id": {"type": "string", "minLength": 1},
-    "subject": {"type": "string", "minLength": 1},
-    "issuer": {"type": "string", "minLength": 1},
+    "grant_id": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+$"},
+    "subject": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+$"},
+    "issuer": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+$"},
     "domains": {"type": "array", "uniqueItems": true, "items": {"enum": ["A_E", "A_C", "A_P", "A_X"]}},
     "capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$"}},
     "resources": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$"}},
     "state": {"enum": ["ACTIVE", "REVOKED"]},
-    "parent_grant_id": {"type": ["string", "null"]}
+    "parent_grant_id": {
+      "anyOf": [
+        {"type": "null"},
+        {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+$"}
+      ]
+    }
   },
   "description": "Static scoped authority metadata only. This schema does not define runtime execution semantics."
 }
