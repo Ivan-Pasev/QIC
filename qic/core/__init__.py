@@ -50,6 +50,11 @@ from .recovery import (
     ReconciliationResult,
     reconcile_recovery,
 )
+from .recovery_store import (
+    RecoveryEvidenceBundle,
+    RecoveryEvidenceStore,
+    reconcile_evidence_bundle,
+)
 from .transition import (
     ENABLED_FAMILIES,
     FAMILY_AUTHORITY,
@@ -108,6 +113,8 @@ __all__ = [
     "ReconciliationResult",
     "RecoveryAssessment",
     "RecoveryClass",
+    "RecoveryEvidenceBundle",
+    "RecoveryEvidenceStore",
     "RootOntology",
     "SemanticMaturity",
     "StateSnapshot",
@@ -126,5 +133,6 @@ __all__ = [
     "digest_hex",
     "journal_phase_successors",
     "ontology_from_id",
+    "reconcile_evidence_bundle",
     "reconcile_recovery",
 ]
