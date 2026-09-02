@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 
 _TOKEN_RE = re.compile(r"^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$")
@@ -26,11 +27,35 @@ class GrantState(str, Enum):
     REVOKED = "REVOKED"
 
 
-def _validated_tokens(values: frozenset[str], *, kind: str) -> frozenset[str]:
-    for value in values:
+def _require_frozenset(values: Any, *, kind: str) -> frozenset[Any]:
+    if not isinstance(values, frozenset):
+        raise TypeError(f"{kind} must be a frozenset")
+    return values
+
+
+def _validated_domains(values: Any) -> frozenset[AuthorityDomain]:
+    domains = _require_frozenset(values, kind="domains")
+    if not all(isinstance(value, AuthorityDomain) for value in domains):
+        raise TypeError("domains must contain only AuthorityDomain values")
+    return domains
+
+
+def _validated_tokens(values: Any, *, kind: str) -> frozenset[str]:
+    tokens = _require_frozenset(values, kind=kind)
+    for value in tokens:
+        if not isinstance(value, str):
+            raise TypeError(f"{kind} identifiers must be strings")
         if not value or value == "*" or not _TOKEN_RE.fullmatch(value):
             raise ValueError(f"invalid {kind} identifier: {value!r}")
-    return values
+    return tokens
+
+
+def _validated_identity(value: Any, *, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string")
+    if not value or "\x00" in value:
+        raise ValueError(f"{field_name} must be non-empty and contain no NUL")
+    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +67,7 @@ class AuthorityRequirement:
     resources: frozenset[str] = frozenset()
 
     def __post_init__(self) -> None:
+        _validated_domains(self.domains)
         _validated_tokens(self.capabilities, kind="capability")
         _validated_tokens(self.resources, kind="resource")
 
@@ -64,15 +90,16 @@ class AuthorityGrant:
     parent_grant_id: str | None = None
 
     def __post_init__(self) -> None:
-        for field_name, value in (
-            ("grant_id", self.grant_id),
-            ("subject", self.subject),
-            ("issuer", self.issuer),
-        ):
-            if not value or "\x00" in value:
-                raise ValueError(f"{field_name} must be non-empty and contain no NUL")
+        _validated_identity(self.grant_id, field_name="grant_id")
+        _validated_identity(self.subject, field_name="subject")
+        _validated_identity(self.issuer, field_name="issuer")
+        if self.parent_grant_id is not None:
+            _validated_identity(self.parent_grant_id, field_name="parent_grant_id")
+        _validated_domains(self.domains)
         _validated_tokens(self.capabilities, kind="capability")
         _validated_tokens(self.resources, kind="resource")
+        if not isinstance(self.state, GrantState):
+            raise TypeError("state must be a GrantState")
 
     @property
     def active(self) -> bool:
@@ -81,6 +108,8 @@ class AuthorityGrant:
     def satisfies(self, requirement: AuthorityRequirement) -> bool:
         """Component-wise static authorization check."""
 
+        if not isinstance(requirement, AuthorityRequirement):
+            raise TypeError("requirement must be an AuthorityRequirement")
         return (
             self.active
             and requirement.domains.issubset(self.domains)
@@ -96,6 +125,8 @@ class AuthorityGrant:
         reduced, never expanded.
         """
 
+        if not isinstance(child, AuthorityGrant):
+            raise TypeError("child must be an AuthorityGrant")
         return (
             self.active
             and child.active
