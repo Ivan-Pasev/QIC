@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qic.invalid/schemas/authority-grant.schema.json",
+  "title": "QIC Authority Grant",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["grant_id", "subject", "issuer", "domains", "capabilities", "resources", "state", "parent_grant_id"],
+  "properties": {
+    "grant_id": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "issuer": {"type": "string", "minLength": 1},
+    "domains": {"type": "array", "uniqueItems": true, "items": {"enum": ["A_E", "A_C", "A_P", "A_X"]}},
+    "capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$"}},
+    "resources": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[._:-][a-z0-9]+)*$"}},
+    "state": {"enum": ["ACTIVE", "REVOKED"]},
+    "parent_grant_id": {"type": ["string", "null"]}
+  },
+  "description": "Static scoped authority metadata only. This schema does not define runtime execution semantics."
+}
