@@ -5,7 +5,7 @@
 
 ## Context
 
-G4 can produce deterministic in-memory transition outcomes, but it does not yet preserve causal history. QIC needs a minimal local append-only event/witness layer before KBI state can acquire durable lineage semantics.
+G4 can produce deterministic in-memory transition outcomes, but it does not yet preserve causal history. QIC needs a minimal local append-only event/witness layer before KBI state can acquire lineage semantics.
 
 ## Decision
 
@@ -31,18 +31,20 @@ Rejected G4 outcomes are valid historical events. They preserve `before_state_di
 The local verifier detects, within this declared in-memory model:
 
 - sequence gaps/reordering;
-- deleted events when linkage/sequence is broken;
+- deletion or insertion that breaks internal sequence/linkage;
 - previous-event or previous-witness digest mismatch;
 - causal state discontinuity;
 - event mutation that invalidates its witness binding;
 - witness/outcome mismatch;
 - rejected events that claim a state change.
 
+A hash-linked prefix is still internally valid. Therefore suffix truncation cannot be detected from the retained prefix alone. `ChronoChain.verify` accepts independently retained anchors — expected chain length, expected head-event digest, and/or expected head-witness digest — so a caller that has preserved a prior head can detect truncation relative to that anchor. Without such an anchor, G5 does not claim completeness or recency of the retained chain.
+
 An external G4 outcome can be checked against its event/witness binding with `verifies_outcome`.
 
 ## Claim boundary
 
-A valid Chrono chain or witness establishes only structural composition under the declared canonicalization/digest rules. It does **not** establish semantic truth, legal or institutional authority, authenticated identity, distributed consensus, trustworthy wall-clock time, durable persistence, crash-recovery atomicity, or successful external/physical effects.
+A valid Chrono chain or witness establishes only structural composition under the declared canonicalization/digest rules. It does **not** establish semantic truth, legal or institutional authority, authenticated identity, nonrepudiation, distributed consensus, trustworthy wall-clock time, durable persistence, crash-recovery atomicity, chain completeness without an external anchor, or successful external/physical effects.
 
 G5 is local and unsigned. Signatures, federation, distributed causal coordinates, durable transaction journaling, and recovery semantics are deferred.
 
@@ -53,13 +55,15 @@ Positive:
 - G4 outcomes acquire deterministic causal lineage;
 - accepted and rejected proposals are both reconstructible;
 - later KBI objects can reference stable event/witness roots;
-- tampering with in-memory chain composition becomes detectable.
+- tampering with internal chain composition becomes detectable;
+- retained external head anchors can detect suffix truncation.
 
 Costs:
 
 - the reference chain is in memory and grows linearly;
 - event time is represented by causal sequence, not a trusted timestamp;
-- local hash linkage is not consensus or nonrepudiation.
+- local hash linkage is not consensus or nonrepudiation;
+- an unanchored valid prefix cannot prove it is the latest/complete chain.
 
 ## Deferred
 
