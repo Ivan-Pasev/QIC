@@ -117,12 +117,15 @@ slices:
       - qic/core/recovery.py
       - qic/core/recovery_store.py
       - schemas/recovery.schema.json
+      - RECOVERY_QUALIFICATION_G9.md
     tests:
       - tests/test_journal.py
       - tests/test_journal_store.py
       - tests/test_recovery_reconciliation.py
       - tests/test_recovery_store.py
       - tests/test_recovery_crash_campaign.py
+      - tests/test_recovery_corruption_cases.py
+      - tests/test_recovery_rejected_outcomes.py
       - tests/test_recovery_schema.py
     recovery_contract:
       - immutable hash-linked journal records
@@ -132,6 +135,7 @@ slices:
       - exact journal-head-bound recovery evidence receipts
       - conservative mismatch and ahead-of-journal quarantine
       - no evidence synthesis
+      - rejected G4 outcomes remain non-commits after restart
       - no double state-commit classification after STATE_COMMITTED
       - restart/idempotent reconciliation
     adr: docs/adr/0011-durable-journal-and-crash-recovery.md
