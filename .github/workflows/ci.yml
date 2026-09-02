@@ -39,6 +39,10 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.12", "3.13"]
+    env:
+      # ZIP timestamps cannot precede 1980. A fixed epoch makes independently
+      # built pure-Python RC0 archives eligible for bit-reproducibility checks.
+      SOURCE_DATE_EPOCH: "315532800"
 
     steps:
       - name: Checkout
@@ -106,3 +110,29 @@ jobs:
             dist/*
             release-evidence/*
           if-no-files-found: error
+
+  rc0-reproducibility:
+    needs: rc0-artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download independent RC0 builds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: qic-rc0-py*
+          path: artifacts
+
+      - name: Require identical release artifact hashes
+        run: |
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/SHA256SUMS \
+            artifacts/qic-rc0-py3.13/release-evidence/SHA256SUMS
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/version.json \
+            artifacts/qic-rc0-py3.13/release-evidence/version.json
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/verify.json \
+            artifacts/qic-rc0-py3.13/release-evidence/verify.json
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/qualification.json \
+            artifacts/qic-rc0-py3.13/release-evidence/qualification.json
