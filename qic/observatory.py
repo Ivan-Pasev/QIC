@@ -16,12 +16,13 @@ import time
 import tracemalloc
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Generic, TypeVar
+from typing import Callable, Generic, TypeVar, cast
 
 from .core.digest import digest_hex
 
 
 T = TypeVar("T")
+_MISSING = object()
 
 
 class MeasurementClass(str, Enum):
@@ -220,7 +221,7 @@ class PerformanceObservatory:
             operation()
 
         samples: list[PerformanceSample] = []
-        final_result: T | None = None
+        final_result: object = _MISSING
         expected_result_digest: str | None = None
 
         for repetition in range(repetitions):
@@ -260,10 +261,11 @@ class PerformanceObservatory:
             )
             final_result = result
 
-        assert final_result is not None
+        if final_result is _MISSING:
+            raise RuntimeError("benchmark produced no measured result")
         frozen_samples = tuple(samples)
         return BenchmarkRun(
-            result=final_result,
+            result=cast(T, final_result),
             samples=frozen_samples,
             summary=summarize_wall_time(frozen_samples),
         )
