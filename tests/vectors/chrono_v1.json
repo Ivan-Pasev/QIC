@@ -1,0 +1,10 @@
+{
+  "genesis_state_digest": "4b6e70f26ea0336f48e3fbd71afcc5979f08f9c642b088a6777d8c7d16b44198",
+  "accepted_proposal_digest": "40517df06fd9867593465fc9b16b66040f235ce16ee82909d13689f1f0f33af1",
+  "accepted_outcome_digest": "6668831dd41bce645b37b684f1924ce36e2f8f86535162bc752a22f5c3763ddf",
+  "accepted_after_state_digest": "e5d14fff96a239827d5a9ab8a34604b32fa3c6c2b8f5a22e8db627087825d54a",
+  "genesis_event_digest": "c58b8a98eeb1b4ecb38a20be848f0ea63ce3ba748e3c531eef98a7a2aa091fde",
+  "genesis_witness_digest": "cde27f98aa4be475ee72d0ca4be1d33ac478b45635e7435fbdc13af784b22c80",
+  "transition_event_digest": "94d429cb31fdadcf659926c9e3d381617622b7f7cdc7bcd22e1ee0f43e1986b6",
+  "transition_witness_digest": "56f6dac0f2f55df523b85a14fee930391d89f3cba5fb7ab50f1af0f82ad96215"
+}

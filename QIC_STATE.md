@@ -6,7 +6,7 @@ Last updated: 2026-09-02
 
 **Phase:** Implementation Convergence
 
-**Active slice:** `QIC-G4 — Transition engine + invariant gate`
+**Active slice:** `QIC-G5 — Chrono + witness`
 
 **Public repository:** `Ivan-Pasev/QIC`
 
@@ -19,45 +19,49 @@ Last updated: 2026-09-02
 - `QIC-G1 — Canonical serializer + digest kernel` is closed and merged to `main` as `27d46780fc39132fff314c5020e254c55161378f`.
 - `QIC-G2 — Root ontology + maturity vector` is closed and merged to `main` as `37445fb52456cf15a6f2c7a0e2bc389c61e307cf`.
 - `QIC-G3 — Authority + capability model` is closed and merged to `main` as `37ab95ac0aa691cf488bc21996ca90508121ca1c`.
-- G3 contains strict immutable authority objects, scoped A_E/A_C/A_P/A_X requirements, non-amplifying delegation, revocation, registry/schema parity, and adversarial construction tests.
+- `QIC-G4 — Transition engine + invariant gate` is closed and merged via PR #11; current `main` includes its deterministic transition kernel.
+- G4 enforces current-state freshness, actor/grant binding, scoped authority, pure rules, invariant gates, exact denial codes, and narrow in-memory no-commit-on-failure semantics.
 - T4 Physical and T5 Evolutionary remain explicitly `NOT_ENABLED`.
-- G4 Issue exists as `#10` and branch `qic-g4/transition-invariant-gate` is active.
+- G5 Issue exists as `#12` and branch `qic-g5/chrono-witness` is active.
 
-## G4 implementation boundary
+## G5 implementation boundary
 
 Implemented on the active branch:
 
-- runtime `TransitionFamily` for T0–T5 with registry parity;
-- immutable `StateSnapshot`, `TransitionSpec`, `TransitionProposal`, and `TransitionOutcome`;
-- expected-before-state digest freshness check;
-- proposal actor to current grant-subject binding;
-- G3 authority enforcement at execution time;
-- exact operation/rule registry;
-- global and operation-scoped invariant gate;
-- explicit failure codes for unknown operation, disabled family, stale state, subject mismatch, authority denial, rule rejection, and invariant failure;
-- rejection returns the exact original state object as `after_state`;
-- T0–T3 enabled in the reference compute profile; T4/T5 hard-disabled;
-- transition JSON Schema, golden vector, and denial/atomicity tests;
-- ADR-0005 documenting the narrow in-memory atomicity claim.
+- immutable `ChronoEvent` and `WitnessRecord`;
+- explicit genesis event/witness rules;
+- monotonically increasing causal sequence numbers;
+- previous-event and previous-witness digest linkage;
+- immutable `ChronoChain` whose append operation returns a new chain;
+- exact G4 proposal/outcome and before/after state digest binding;
+- accepted and rejected transition event semantics;
+- rejected outcomes remain witnessable while preserving `before_state_digest == after_state_digest`;
+- local chain verification for sequence/link/state/witness continuity;
+- external G4 outcome-to-event/witness verification;
+- deterministic Chrono/witness digests and fixed golden vectors;
+- machine-readable Chrono/witness JSON Schema and enum parity tests;
+- adversarial tests for event deletion, reordering, forged linkage, event mutation, witness mutation, and outcome mismatch;
+- ADR-0006 documenting structural witness boundaries.
 
 ## Claim boundary
 
-A successful G4 outcome demonstrates only that a candidate state passed the declared in-memory structural gates. It does not establish semantic truth, physical safety, external side-effect completion, provenance completeness, crash-recovery atomicity, durable persistence, or witness-chain completeness.
+A valid G5 Chrono chain or witness establishes only structural composition under the declared canonicalization/digest rules. It does not establish semantic truth, authority, authenticated identity, distributed consensus, trustworthy wall-clock time, durable persistence, crash-recovery atomicity, or successful external/physical effects.
 
-G4 does not implement KBI admission, Chrono persistence, signatures, federation, or physical control.
+G5 is local and unsigned. It does not implement KBI claim admission, persistent journal recovery, identity cryptography, federation, or physical control.
 
-## Current G4 exit gate
+## Current G5 exit gate
 
-- open a G4 PR from `qic-g4/transition-invariant-gate`;
+- open a G5 PR from `qic-g5/chrono-witness`;
 - require CI on Python 3.12 and 3.13;
-- review the full diff for any denial path that could expose changed state;
-- verify T4/T5 remain non-executable even with A_P/A_X grants;
-- verify registry/schema/runtime parity and transition golden stability;
+- review the full diff for any history rewrite path, witness circularity, or false durability/nonrepudiation claim;
+- verify rejected outcomes cannot imply a state commit;
+- verify tampering/reordering/deletion and witness mismatch are detected;
+- verify schema/runtime parity and Chrono golden stability;
 - merge only after the reviewed head is green.
 
 ## Next admissible action
 
-Open and qualify the G4 PR. If review-clean and green, merge G4, close Issue #10, and instantiate `QIC-G5 — Chrono + witness`.
+Open and qualify the G5 PR. If review-clean and green, merge G5, close Issue #12, and instantiate `QIC-G6 — Minimal KBI`.
 
 ## Continuation rule
 
