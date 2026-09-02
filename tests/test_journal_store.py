@@ -17,12 +17,12 @@ from qic.core import (
 )
 
 
-def prepared(transaction_id: str = "tx-1") -> JournalRecord:
+def prepared(transaction_id: str = "tx-1", *, proposal_digest: str = "proposal") -> JournalRecord:
     return JournalRecord(
         transaction_id=transaction_id,
         sequence=0,
         phase=JournalPhase.PREPARED,
-        proposal_digest="proposal",
+        proposal_digest=proposal_digest,
         actor="operator",
         grant_digest="grant",
         before_state_digest="before",
@@ -64,17 +64,7 @@ def test_conflicting_duplicate_or_skipped_sequence_is_rejected(tmp_path: Path) -
     p0, p1, *_ = full_chain()
     store.append(p0)
     with pytest.raises(JournalConflictError):
-        store.append(
-            JournalRecord(
-                transaction_id="tx-1",
-                sequence=0,
-                phase=JournalPhase.PREPARED,
-                proposal_digest="different",
-                actor="operator",
-                grant_digest="grant",
-                before_state_digest="before",
-            )
-        )
+        store.append(prepared(proposal_digest="different"))
     skipped = JournalRecord(
         transaction_id="tx-1",
         sequence=2,
@@ -117,7 +107,7 @@ def test_missing_middle_record_is_detected(tmp_path: Path) -> None:
         store.load("tx-1")
 
 
-def test_fail_before_replace_leaves_no_committed_record(tmp_path: Path) -> None:
+def test_fail_before_promote_leaves_no_committed_record(tmp_path: Path) -> None:
     def fail(point: JournalFailpoint, path: Path) -> None:
         if point is JournalFailpoint.AFTER_FILE_FSYNC:
             raise RuntimeError("crash")
@@ -128,9 +118,9 @@ def test_fail_before_replace_leaves_no_committed_record(tmp_path: Path) -> None:
     assert JournalFileStore(tmp_path / "journal").load("tx-1") == ()
 
 
-def test_fail_after_replace_leaves_valid_record_for_recovery(tmp_path: Path) -> None:
+def test_fail_after_promote_leaves_valid_record_for_recovery(tmp_path: Path) -> None:
     def fail(point: JournalFailpoint, path: Path) -> None:
-        if point is JournalFailpoint.AFTER_REPLACE:
+        if point is JournalFailpoint.AFTER_PROMOTE:
             raise RuntimeError("crash")
 
     root = tmp_path / "journal"
@@ -139,6 +129,26 @@ def test_fail_after_replace_leaves_valid_record_for_recovery(tmp_path: Path) -> 
     with pytest.raises(RuntimeError, match="crash"):
         store.append(record)
     assert JournalFileStore(root).load("tx-1") == (record,)
+
+
+def test_concurrent_conflicting_promotion_never_overwrites_winner(tmp_path: Path) -> None:
+    desired = prepared(proposal_digest="desired")
+    competing = prepared(proposal_digest="competing")
+
+    staging = JournalFileStore(tmp_path / "staging")
+    competing_bytes = staging.append(competing).read_bytes()
+
+    def inject_winner(point: JournalFailpoint, temporary: Path) -> None:
+        if point is JournalFailpoint.AFTER_FILE_FSYNC:
+            target = temporary.with_suffix("")
+            target.write_bytes(competing_bytes)
+
+    root = tmp_path / "journal"
+    store = JournalFileStore(root, failpoint=inject_winner)
+    with pytest.raises(JournalConflictError, match="concurrent journal promotion"):
+        store.append(desired)
+
+    assert JournalFileStore(root).load("tx-1") == (competing,)
 
 
 def test_recovery_classifier_is_phase_specific_and_nonexecuting() -> None:
