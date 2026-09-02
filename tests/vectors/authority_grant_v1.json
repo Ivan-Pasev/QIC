@@ -1,0 +1,16 @@
+{
+  "schema": "qic.test-vector.authority-grant.v1",
+  "digest_domain": "qic.authority-grant",
+  "grant": {
+    "grant_id": "grant-001",
+    "subject": "hermes",
+    "issuer": "qic.root",
+    "domains": ["A_C"],
+    "capabilities": ["mission.plan", "processor.submit"],
+    "resources": ["processor.omnius", "state.derived"],
+    "state": "ACTIVE",
+    "parent_grant_id": null
+  },
+  "canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"dataclass\",\"class\":\"qic.core.authority.AuthorityGrant\",\"fields\":{\"capabilities\":{\"$type\":\"frozenset\",\"items\":[{\"$type\":\"str\",\"value\":\"mission.plan\"},{\"$type\":\"str\",\"value\":\"processor.submit\"}]},\"domains\":{\"$type\":\"frozenset\",\"items\":[{\"$type\":\"enum\",\"class\":\"qic.core.authority.AuthorityDomain\",\"name\":\"COMPUTATIONAL\",\"value\":{\"$type\":\"str\",\"value\":\"A_C\"}}]},\"grant_id\":{\"$type\":\"str\",\"value\":\"grant-001\"},\"issuer\":{\"$type\":\"str\",\"value\":\"qic.root\"},\"parent_grant_id\":{\"$type\":\"null\"},\"resources\":{\"$type\":\"frozenset\",\"items\":[{\"$type\":\"str\",\"value\":\"processor.omnius\"},{\"$type\":\"str\",\"value\":\"state.derived\"}]},\"state\":{\"$type\":\"enum\",\"class\":\"qic.core.authority.GrantState\",\"name\":\"ACTIVE\",\"value\":{\"$type\":\"str\",\"value\":\"ACTIVE\"}},\"subject\":{\"$type\":\"str\",\"value\":\"hermes\"}}}}",
+  "sha256": "6ab81b19bfa0e261f59881de6ef11538147343fdd442e81968c391e86e5020ab"
+}
