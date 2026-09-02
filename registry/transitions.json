@@ -1,0 +1,12 @@
+{
+  "schema": "qic.registry.transitions.v1",
+  "transitions": [
+    {"id": "T0", "name": "Observation", "authority_domain": null},
+    {"id": "T1", "name": "Derivation", "authority_domain": "A_C"},
+    {"id": "T2", "name": "Epistemic", "authority_domain": "A_E"},
+    {"id": "T3", "name": "Computational", "authority_domain": "A_C"},
+    {"id": "T4", "name": "Physical", "authority_domain": "A_P", "status": "NOT_ENABLED"},
+    {"id": "T5", "name": "Evolutionary", "authority_domain": "A_X", "status": "NOT_ENABLED"}
+  ],
+  "notes": "Registry seed only. Runtime transition semantics are introduced in later G-slices."
+}

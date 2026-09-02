@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qic.invalid/schemas/maturity.schema.json",
+  "title": "QIC Maturity",
+  "type": "string",
+  "enum": [
+    "CONCEPTUAL",
+    "IMPLEMENTED",
+    "TESTED",
+    "FORMALLY_MODELED",
+    "SIMULATED",
+    "HARDWARE_TESTED",
+    "DEPLOYED",
+    "INDEPENDENTLY_REPLICATED"
+  ]
+}

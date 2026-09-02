@@ -1,0 +1,27 @@
+{
+  "schema": "qic.constitution.genesis.v1",
+  "version": "QIC-CONSTITUTION/0.0.1",
+  "prime_laws": [
+    "Generation != Authority",
+    "Proposal != Canonical Knowledge",
+    "Remote State != Local Authority",
+    "Decision != Physical Actuation",
+    "Learning != Safety-Law Rewrite",
+    "Design Generation != Physical Mutation",
+    "No Accelerator Without Measured Bottleneck",
+    "No Plane May Claim Operational Maturity Beyond Its Actual Evidence"
+  ],
+  "authority_domains": ["A_E", "A_C", "A_P", "A_X"],
+  "transition_families": ["T0", "T1", "T2", "T3", "T4", "T5"],
+  "root_ontology": [
+    "STATE",
+    "ACTOR",
+    "OPERATION",
+    "CONSTRAINT",
+    "EVIDENCE",
+    "RESOURCE",
+    "WITNESS"
+  ],
+  "maturity_claim": "IMPLEMENTED",
+  "notes": "This file establishes the genesis constitutional metadata only. Deterministic canonical serialization and digest semantics are QIC-G1 targets."
+}
