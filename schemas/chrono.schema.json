@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qic.invalid/schemas/chrono.schema.json",
+  "title": "QIC Chrono / Witness",
+  "$defs": {
+    "event_type": {"enum": ["GENESIS", "TRANSITION"]},
+    "witness_subject": {"enum": ["GENESIS_STATE", "TRANSITION_OUTCOME"]},
+    "failure": {"enum": ["UNKNOWN_OPERATION", "FAMILY_NOT_ENABLED", "STALE_STATE", "SUBJECT_MISMATCH", "AUTHORITY_DENIED", "RULE_REJECTED", "INVARIANT_FAILED"]},
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "previous_event_digest", "event_type", "proposal_digest", "outcome_digest", "before_state_digest", "after_state_digest", "accepted", "failure"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0},
+        "previous_event_digest": {"type": ["string", "null"]},
+        "event_type": {"$ref": "#/$defs/event_type"},
+        "proposal_digest": {"type": ["string", "null"]},
+        "outcome_digest": {"type": ["string", "null"]},
+        "before_state_digest": {"type": "string", "minLength": 1},
+        "after_state_digest": {"type": "string", "minLength": 1},
+        "accepted": {"type": ["boolean", "null"]},
+        "failure": {"anyOf": [{"$ref": "#/$defs/failure"}, {"type": "null"}]}
+      }
+    },
+    "witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "previous_witness_digest", "event_digest", "subject", "subject_digest"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 0},
+        "previous_witness_digest": {"type": ["string", "null"]},
+        "event_digest": {"type": "string", "minLength": 1},
+        "subject": {"$ref": "#/$defs/witness_subject"},
+        "subject_digest": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["events", "witnesses"],
+  "properties": {
+    "events": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/event"}},
+    "witnesses": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/witness"}}
+  },
+  "description": "Local unsigned append-only causal/witness structure. Structural linkage does not imply semantic truth, authority, consensus, or crash-safe durability."
+}
