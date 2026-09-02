@@ -27,9 +27,9 @@ def _release_public_claim_surface() -> dict[str, object]:
 
     try:
         manifest = resource_json("QIC_MANIFEST.json")
-        cli_text = Path(_cli.__file__).read_text(encoding="utf-8") + Path(__file__).read_text(
-            encoding="utf-8"
-        )
+        # Preserve G8's original audit scope: inspect the actual CLI implementation
+        # module, not this release adapter (which necessarily contains audit literals).
+        cli_text = Path(_cli.__file__).read_text(encoding="utf-8")
         claim_boundary = resource_text("CLAIM_BOUNDARY.md")
     except (OSError, ValueError) as exc:
         return _qualification._check("public_claim_surface", False, f"read_failure={exc}")
