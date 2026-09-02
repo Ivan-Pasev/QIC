@@ -17,12 +17,17 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .digest import digest_hex
+from .journal import JournalRecord
 from .journal_store import (
     JournalConflictError,
     JournalCorruptionError,
     _fsync_directory,
 )
-from .recovery import DurableArtifactView
+from .recovery import (
+    DurableArtifactView,
+    ReconciliationResult,
+    reconcile_recovery,
+)
 
 
 def _text(value: object, *, name: str) -> str:
@@ -72,6 +77,26 @@ class RecoveryEvidenceBundle:
             chrono_event_digest=self.chrono_event_digest,
             witness_digest=self.witness_digest,
         )
+
+
+def reconcile_evidence_bundle(
+    records: tuple[JournalRecord, ...],
+    bundle: RecoveryEvidenceBundle,
+) -> ReconciliationResult:
+    """Require exact journal binding before using a persisted evidence bundle."""
+
+    if not records:
+        raise ValueError("reconciliation requires at least one journal record")
+    if not isinstance(bundle, RecoveryEvidenceBundle):
+        raise TypeError("bundle must be RecoveryEvidenceBundle")
+    head = records[-1]
+    if bundle.transaction_id != head.transaction_id:
+        raise JournalCorruptionError("recovery evidence transaction_id does not match journal")
+    if bundle.journal_sequence != head.sequence:
+        raise JournalCorruptionError("recovery evidence sequence does not match journal head")
+    if bundle.journal_head_digest != head.digest:
+        raise JournalCorruptionError("recovery evidence head digest does not match journal head")
+    return reconcile_recovery(records, bundle.artifact_view)
 
 
 def _payload(bundle: RecoveryEvidenceBundle) -> dict[str, object]:
