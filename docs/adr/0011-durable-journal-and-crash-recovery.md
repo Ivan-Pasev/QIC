@@ -21,19 +21,20 @@ Each successor is hash-linked to the previous record and carries only digest ref
 
 The reference `JournalFileStore` persists records by:
 
-1. creating a new temporary file;
+1. creating a new temporary file in the target directory;
 2. writing the complete immutable record;
-3. flushing and fsyncing the file;
-4. atomically replacing the target path;
-5. fsyncing the containing directory.
+3. flushing and fsyncing the temporary file;
+4. atomically publishing it with a **no-replace hard-link** operation;
+5. unlinking the temporary name;
+6. fsyncing the containing directory.
 
-Existing immutable records are never overwritten. Retrying the exact same record is idempotent; a different record at the same sequence is a conflict.
+The no-replace promotion matters: a concurrent process that wins the target path after an earlier pre-check cannot be silently overwritten. An identical concurrently promoted record is treated as an idempotent retry; different content at the same sequence is a conflict.
 
 ## Recovery evidence
 
 The journal is not treated as proof that state, Chrono, or witness artifacts actually exist. Separately verified durable artifact digests are represented by `DurableArtifactView` and may be persisted in an immutable `RecoveryEvidenceBundle` bound to the exact transaction ID, journal sequence, and journal-head digest.
 
-Persisting a recovery evidence bundle is receipt persistence only. It does not grant epistemic authority or transform the referenced artifact into authoritative state.
+`RecoveryEvidenceStore` uses the same immutable no-replace promotion rule. Persisting a recovery evidence bundle is receipt persistence only. It does not grant epistemic authority or transform the referenced artifact into authoritative state.
 
 ## Reconciliation rule
 
@@ -50,12 +51,14 @@ Recovery is conservative and descriptive.
 
 The G9 reference layer does not automatically execute those next steps. A future recovery executor must separately prove current authority and artifact identity before any consequence.
 
-## Crash campaign
+## Crash and race campaign
 
 Deterministic tests cover:
 
 - failure before atomic journal promotion;
-- failure after replacement but before directory-fsync completion is reported by a failpoint while leaving only whatever valid target the filesystem has exposed;
+- failure after promotion but before directory-fsync completion is reported by a failpoint while leaving only whatever target the filesystem has exposed;
+- concurrent conflicting journal promotion without overwrite of the winner;
+- concurrent conflicting recovery-evidence promotion without overwrite of the winner;
 - restart from every journal phase;
 - repeated restart/reconciliation idempotence;
 - state evidence ahead of a `VALIDATED` journal;
@@ -68,7 +71,7 @@ Deterministic tests cover:
 
 ## Claim boundary
 
-G9 demonstrates tested behavior of the declared local Python reference implementation on the CI filesystem/runtime. It is not a universal storage-durability proof and does not establish behavior for every filesystem, controller cache, virtual-machine stack, network filesystem, kernel, power-loss mode, or hardware failure.
+G9 demonstrates tested behavior of the declared local Python reference implementation on the CI filesystem/runtime. It is not a universal storage-durability proof and does not establish behavior for every filesystem, controller cache, virtual-machine stack, network filesystem, kernel, power-loss mode, or hardware failure. The hard-link promotion policy also presumes a local filesystem that supplies the required same-filesystem link semantics.
 
 G9 does not:
 
@@ -87,6 +90,7 @@ The public maturity vector is not automatically promoted merely because G9 passe
 Positive:
 
 - crash boundaries become explicit and testable;
+- concurrent immutable-record promotion cannot intentionally overwrite an existing winner;
 - exact durable receipt binding prevents cross-transaction/head reuse;
 - ambiguous evidence fails closed into quarantine;
 - restart classification cannot silently double-commit state;
