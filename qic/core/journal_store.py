@@ -152,8 +152,6 @@ class JournalFileStore:
             self._failpoint(point, path)
 
     def _transaction_dir(self, transaction_id: str) -> Path:
-        # JournalRecord already rejects NUL/empty identities. This extra filename
-        # restriction prevents path traversal and platform-special separators.
         if not transaction_id or transaction_id in {".", ".."}:
             raise ValueError("invalid transaction_id")
         if any(token in transaction_id for token in ("/", "\\", "\x00")):
@@ -170,6 +168,19 @@ class JournalFileStore:
         directory.mkdir(parents=True, exist_ok=True)
         _fsync_directory(self.root)
 
+        # Retry idempotence is checked before durable-head progression rules. If
+        # the exact sequence already exists with identical content, a caller may
+        # safely repeat the append even when that record is terminal.
+        target = self._record_path(record)
+        if target.exists():
+            try:
+                durable = _record_from_payload(json.loads(target.read_text(encoding="utf-8")))
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise JournalCorruptionError(f"cannot decode durable retry target: {exc}") from exc
+            if durable == record:
+                return target
+            raise JournalConflictError("journal sequence already exists with different content")
+
         existing = self.load(record.transaction_id)
         if not existing:
             if record.sequence != 0 or record.phase is not JournalPhase.PREPARED:
@@ -185,13 +196,6 @@ class JournalFileStore:
             if not previous.may_advance_to(record.phase):
                 raise JournalConflictError("illegal durable journal phase transition")
 
-        target = self._record_path(record)
-        if target.exists():
-            durable = _record_from_payload(json.loads(target.read_text(encoding="utf-8")))
-            if durable == record:
-                return target
-            raise JournalConflictError("journal sequence already exists with different content")
-
         temporary = target.with_suffix(".json.tmp")
         data = _encoded_record(record)
         try:
@@ -205,8 +209,6 @@ class JournalFileStore:
             self._trip(JournalFailpoint.AFTER_REPLACE, target)
             _fsync_directory(directory)
         except BaseException:
-            # A crash after replace may leave a valid durable target. Cleanup only
-            # applies to an unpromoted temporary file and never rewrites target.
             try:
                 temporary.unlink(missing_ok=True)
             except OSError:
