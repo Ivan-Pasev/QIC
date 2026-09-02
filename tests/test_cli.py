@@ -128,7 +128,9 @@ def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     assert "No formal-runtime verification claim" in manifest["explicit_nonclaims"]
     assert "No hardware-tested claim" in manifest["explicit_nonclaims"]
     assert "No durable crash-recovery claim while G9 is active" in manifest["explicit_nonclaims"]
-    assert "does not certify" in manifest["claim_boundary"]
+    claim_boundary = manifest["claim_boundary"]
+    assert "certify semantic truth" in claim_boundary
+    assert "universal durable crash recovery" in claim_boundary
 
 
 def test_cli_surface_contains_no_mutating_authority_command() -> None:
