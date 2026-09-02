@@ -1,5 +1,6 @@
 """Trusted constitutional core for QIC."""
 
+from .authority import AuthorityDomain, AuthorityGrant, AuthorityRequirement, GrantState
 from .canonical import (
     CANONICAL_VERSION,
     CanonicalizationError,
@@ -20,6 +21,9 @@ from .maturity_vector import (
 from .ontology import ROOT_ONTOLOGY, RootOntology, ontology_from_id
 
 __all__ = [
+    "AuthorityDomain",
+    "AuthorityGrant",
+    "AuthorityRequirement",
     "CANONICAL_VERSION",
     "DIGEST_VERSION",
     "CanonicalizationError",
@@ -28,6 +32,7 @@ __all__ = [
     "DigestDomainError",
     "EvidenceMaturity",
     "FormalMaturity",
+    "GrantState",
     "HardwareMaturity",
     "Maturity",
     "MaturityVector",
