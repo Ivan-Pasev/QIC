@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qic.invalid/schemas/recovery.schema.json",
+  "title": "QIC G9 Durable Recovery Records",
+  "type": "object",
+  "$defs": {
+    "digestText": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "journalPhase": {
+      "enum": [
+        "PREPARED",
+        "VALIDATED",
+        "STATE_COMMITTED",
+        "CHRONO_COMMITTED",
+        "WITNESS_COMMITTED",
+        "COMPLETE",
+        "ABORTED",
+        "QUARANTINED"
+      ]
+    },
+    "journalRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "transaction_id",
+        "sequence",
+        "phase",
+        "proposal_digest",
+        "actor",
+        "grant_digest",
+        "before_state_digest",
+        "after_state_digest",
+        "outcome_digest",
+        "chrono_event_digest",
+        "witness_digest",
+        "previous_record_digest",
+        "reason",
+        "record_digest"
+      ],
+      "properties": {
+        "schema": {"const": "qic.journal.record.v1"},
+        "transaction_id": {"$ref": "#/$defs/digestText"},
+        "sequence": {"type": "integer", "minimum": 0},
+        "phase": {"$ref": "#/$defs/journalPhase"},
+        "proposal_digest": {"$ref": "#/$defs/digestText"},
+        "actor": {"$ref": "#/$defs/digestText"},
+        "grant_digest": {"$ref": "#/$defs/digestText"},
+        "before_state_digest": {"$ref": "#/$defs/digestText"},
+        "after_state_digest": {"anyOf": [{"$ref": "#/$defs/digestText"}, {"type": "null"}]},
+        "outcome_digest": {"anyOf": [{"$ref": "#/$defs/digestText"}, {"type": "null"}]},
+        "chrono_event_digest": {"anyOf": [{"$ref": "#/$defs/digestText"}, {"type": "null"}]},
+        "witness_digest": {"anyOf": [{"$ref": "#/$defs/digestText"}, {"type": "null"}]},
+        "previous_record_digest": {"anyOf": [{"$ref": "#/$defs/digestText"}, {"type": "null"}]},
+        "reason": {"anyOf": [{"$ref": "#/$defs/digestText"}, {"type": "null"}]},
+        "record_digest": {"$ref": "#/$defs/digestText"}
+      }
+    },
+    "recoveryEvidenceBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "transaction_id",
+        "journal_sequence",
+        "journal_head_digest",
+        "state_digest",
+        "outcome_digest",
+        "chrono_event_digest",
+        "witness_digest",
+        "bundle_digest"
+      ],
+      "properties": {
+        "schema": {"const": "qic.recovery.evidence_bundle.v1"},
+        "transaction_id": {"$ref": "#/$defs/digestText"},
+        "journal_sequence": {"type": "integer", "minimum": 0},
+        "journal_head_digest": {"$ref": "#/$defs/digestText"},
+        "state_digest": {"$ref": "#/$defs/digestText"},
+        "outcome_digest": {"anyOf": [{"$ref": "#/$defs/digestText"}, {"type": "null"}]},
+        "chrono_event_digest": {"anyOf": [{"$ref": "#/$defs/digestText"}, {"type": "null"}]},
+        "witness_digest": {"anyOf": [{"$ref": "#/$defs/digestText"}, {"type": "null"}]},
+        "bundle_digest": {"$ref": "#/$defs/digestText"}
+      }
+    }
+  },
+  "oneOf": [
+    {"$ref": "#/$defs/journalRecord"},
+    {"$ref": "#/$defs/recoveryEvidenceBundle"}
+  ]
+}
