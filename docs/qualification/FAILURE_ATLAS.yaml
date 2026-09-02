@@ -1,0 +1,70 @@
+schema: qic.failure_atlas.v1
+scope: G8 adversarial constitutional qualification over G0-G7
+claim_boundary: >-
+  Failure classification describes tested local containment behavior only. It is
+  not a security certification, formal proof, safety case, or production-readiness claim.
+severity:
+  S0: informational
+  S1: local malformed input
+  S2: structural integrity violation
+  S3: authority or epistemic boundary violation
+  S4: constitutional boundary bypass
+  S5: physical/evolutionary boundary bypass
+classes:
+  - id: F0-CANONICAL-AMBIGUITY
+    severity: S2
+    stimulus: unsupported float or non-string mapping key
+    expected_containment: reject canonicalization; no digest identity claim
+    qualification_check: canonical_fail_closed
+  - id: F1-MATURITY-COLLAPSE
+    severity: S3
+    stimulus: substitute scalar maturity rank for five-dimensional partial order
+    expected_containment: component-wise requirement fails
+    qualification_check: maturity_partial_order
+    mutant: scalar_maturity_collapse
+  - id: F2-AUTHORITY-AMPLIFICATION
+    severity: S4
+    stimulus: missing capability or expanded child delegation
+    expected_containment: authorization/delegation denied
+    qualification_check: authority_nonamplification
+    mutant: authority_any_of
+  - id: F3-TRANSITION-STALE-OR-UNAUTHORIZED
+    severity: S4
+    stimulus: stale state root or wrong authority domain
+    expected_containment: rejected outcome with exact original state object
+    qualification_check: transition_atomicity_and_disabled_families
+  - id: F4-PHYSICAL-EVOLUTIONARY-BYPASS
+    severity: S5
+    stimulus: matching A_P/A_X grant supplied for T4/T5
+    expected_containment: FAMILY_NOT_ENABLED; no state change
+    qualification_check: transition_atomicity_and_disabled_families
+    mutant: enable_t4
+  - id: F5-CHRONO-TAMPER
+    severity: S3
+    stimulus: event mutation, linkage mismatch, or non-prefix deletion
+    expected_containment: chain verification fails
+    qualification_check: chrono_tamper_and_anchor_boundary
+  - id: F6-CHRONO-SUFFIX-TRUNCATION
+    severity: S3
+    stimulus: valid historical prefix presented as current chain
+    expected_containment: unanchored prefix may verify; external expected head/length anchor must reject stale prefix
+    qualification_check: chrono_tamper_and_anchor_boundary
+    mutant: ignore_chrono_anchor
+  - id: F7-EVIDENCE-ECHO
+    severity: S3
+    stimulus: multiple bindings/evidence records repeat one source identity
+    expected_containment: independent-source count remains one; corroboration denied
+    qualification_check: kbi_echo_and_contradiction_containment
+    mutant: count_echo_bindings
+  - id: F8-CONTRADICTION-SUPPRESSION
+    severity: S3
+    stimulus: explicit contradiction between claims
+    expected_containment: contradiction persists; target/counterclaim remain non-canonical defensive states
+    qualification_check: kbi_echo_and_contradiction_containment
+  - id: F9-CLAIM-INFLATION
+    severity: S4
+    stimulus: manifest/CLI implies formal, hardware, federation, durable recovery, physical control, or universal truth maturity
+    expected_containment: public-claim audit fails and blocks release qualification
+    qualification_check: public_claim_surface
+release_rule: >-
+  Any failed qualification check or surviving declared critical modeled mutant blocks G8 closure.

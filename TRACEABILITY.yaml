@@ -65,3 +65,22 @@ slices:
     tests:
       - tests/test_cli.py
     adr: docs/adr/0008-genesis-cli-verification.md
+  G8:
+    title: Adversarial Constitutional Qualification
+    implementation:
+      - qic/qualification.py
+      - docs/qualification/FAILURE_ATLAS.yaml
+      - QUALIFICATION_REPORT.md
+      - QIC_MANIFEST.json
+    tests:
+      - tests/adversarial/test_qualification.py
+    cli:
+      - qic verify qualification
+      - qic --json verify
+    modeled_mutants:
+      - scalar_maturity_collapse
+      - authority_any_of
+      - enable_t4
+      - ignore_chrono_anchor
+      - count_echo_bindings
+    adr: docs/adr/0009-adversarial-constitutional-qualification.md

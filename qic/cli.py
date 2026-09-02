@@ -32,6 +32,7 @@ from .core import (
 from .core.authority import GrantState
 from .core.kbi import EvidenceClass as RuntimeEvidenceClass
 from .core.transition import ENABLED_FAMILIES, FAMILY_AUTHORITY, TransitionFailure
+from .qualification import qualification_verify
 
 
 EXIT_PASS = 0
@@ -346,6 +347,7 @@ _VERIFIERS: dict[str, Callable[[], dict[str, object]]] = {
     "transition": verify_transition,
     "chrono": verify_chrono,
     "kbi": verify_kbi,
+    "qualification": qualification_verify,
 }
 
 
@@ -355,7 +357,7 @@ def aggregate_verify() -> dict[str, object]:
         "claim_boundary": _CLAIM_BOUNDARY,
         "checks": checks,
         "pass": all(bool(check["pass"]) for check in checks),
-        "scope": "G0-G7 structural verification",
+        "scope": "G0-G8 structural verification",
     }
 
 
@@ -392,9 +394,9 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_PASS
     if args.command == "status":
         payload = {
-            "active_implementation": "G7",
+            "active_implementation": "G8",
             "claim_boundary": _CLAIM_BOUNDARY,
-            "implemented_through": "G6",
+            "implemented_through": "G7",
             "transition_families_enabled": [item.value for item in sorted(ENABLED_FAMILIES, key=lambda x: x.value)],
             "transition_families_not_enabled": ["T4", "T5"],
         }
