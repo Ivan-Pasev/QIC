@@ -121,8 +121,7 @@ class WitnessRecord:
         if self.sequence == 0 and self.previous_witness_digest is not None:
             raise ValueError("genesis witness cannot have a previous witness")
         if self.sequence > 0 and (
-            type(self.previous_witness_digest) is not str
-            or not self.previous_witness_digest
+            type(self.previous_witness_digest) is not str or not self.previous_witness_digest
         ):
             raise ValueError("non-genesis witness requires previous_witness_digest")
 
@@ -137,6 +136,8 @@ class ChronoChain:
 
     Appending returns a new chain. Existing events/witnesses are never rewritten.
     This is an in-memory reference structure, not yet a durable crash-safe journal.
+    A valid prefix is itself a valid chain; suffix truncation is detectable only
+    when verification is supplied an independently retained expected head/length.
     """
 
     events: tuple[ChronoEvent, ...]
@@ -197,6 +198,9 @@ class ChronoChain:
 
         if type(outcome) is not TransitionOutcome:
             raise TypeError("outcome must be TransitionOutcome exactly")
+        valid, reason = self.verify()
+        if not valid:
+            raise ValueError(f"cannot append to invalid Chrono chain: {reason}")
         if outcome.before_digest != self.current_state_digest:
             raise ValueError("transition outcome does not begin at current Chrono state")
         sequence = len(self.events)
@@ -227,13 +231,38 @@ class ChronoChain:
             raise ValueError(f"candidate Chrono chain failed verification: {reason}")
         return candidate
 
-    def verify(self) -> tuple[bool, str | None]:
-        """Verify sequence, linkage, event semantics, and witness composition."""
+    def verify(
+        self,
+        *,
+        expected_length: int | None = None,
+        expected_head_event_digest: str | None = None,
+        expected_head_witness_digest: str | None = None,
+    ) -> tuple[bool, str | None]:
+        """Verify internal linkage and, optionally, an independently retained head.
+
+        Internal hash linkage cannot distinguish a complete chain from a valid
+        truncated prefix. `expected_length` and/or expected head digests provide
+        the external anchor needed to detect suffix truncation.
+        """
+
+        if expected_length is not None:
+            if type(expected_length) is not int or expected_length < 1:
+                raise ValueError("expected_length must be a positive int or None")
+            if len(self.events) != expected_length or len(self.witnesses) != expected_length:
+                return False, "CHAIN_LENGTH_MISMATCH"
+        for name, value in (
+            ("expected_head_event_digest", expected_head_event_digest),
+            ("expected_head_witness_digest", expected_head_witness_digest),
+        ):
+            if value is not None and (type(value) is not str or not value):
+                raise ValueError(f"{name} must be a non-empty string or None")
 
         if len(self.events) != len(self.witnesses):
             return False, "EVENT_WITNESS_LENGTH_MISMATCH"
-        if not self.events:
-            return False, "EMPTY_CHAIN"
+        if expected_head_event_digest is not None and self.head_event.digest != expected_head_event_digest:
+            return False, "HEAD_EVENT_DIGEST_MISMATCH"
+        if expected_head_witness_digest is not None and self.head_witness.digest != expected_head_witness_digest:
+            return False, "HEAD_WITNESS_DIGEST_MISMATCH"
 
         for index, (event, witness) in enumerate(zip(self.events, self.witnesses)):
             if event.sequence != index or witness.sequence != index:
