@@ -5,9 +5,10 @@ replay authority, execute transitions, synthesize state, append Chrono events,
 or create witnesses. Recovery classification is descriptive: callers must
 supply and separately verify any authoritative artifacts required to continue.
 
-The reference store uses write-temp -> flush/fsync -> os.replace -> directory
-fsync. This is a local-filesystem durability policy, not a claim about every
-filesystem, storage controller, VM, network filesystem, or power-failure mode.
+The reference store uses write-temp -> flush/fsync -> atomic no-replace hard-link
+promotion -> temp unlink -> directory fsync. This is a local-filesystem
+durability policy, not a claim about every filesystem, storage controller, VM,
+network filesystem, or power-failure mode.
 """
 
 from __future__ import annotations
@@ -37,7 +38,7 @@ class JournalConflictError(JournalStoreError):
 class JournalFailpoint(str, Enum):
     AFTER_TEMP_WRITE = "AFTER_TEMP_WRITE"
     AFTER_FILE_FSYNC = "AFTER_FILE_FSYNC"
-    AFTER_REPLACE = "AFTER_REPLACE"
+    AFTER_PROMOTE = "AFTER_PROMOTE"
 
 
 class RecoveryClass(str, Enum):
@@ -133,6 +134,24 @@ def _fsync_directory(path: Path) -> None:
         os.close(descriptor)
 
 
+def _promote_no_replace(temporary: Path, target: Path) -> None:
+    """Atomically publish *temporary* without replacing an existing target."""
+
+    # Hard-link creation is atomic with respect to target existence on the local
+    # filesystem. Unlike os.replace(), it cannot silently overwrite a record
+    # another process promoted after our earlier target pre-check.
+    os.link(temporary, target)
+    temporary.unlink()
+
+
+def _read_record_path(path: Path, *, context: str) -> JournalRecord:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise JournalCorruptionError(f"cannot decode {context}: {exc}") from exc
+    return _record_from_payload(payload)
+
+
 class JournalFileStore:
     """Reference local-filesystem store for immutable per-transaction journals."""
 
@@ -168,15 +187,9 @@ class JournalFileStore:
         directory.mkdir(parents=True, exist_ok=True)
         _fsync_directory(self.root)
 
-        # Retry idempotence is checked before durable-head progression rules. If
-        # the exact sequence already exists with identical content, a caller may
-        # safely repeat the append even when that record is terminal.
         target = self._record_path(record)
         if target.exists():
-            try:
-                durable = _record_from_payload(json.loads(target.read_text(encoding="utf-8")))
-            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-                raise JournalCorruptionError(f"cannot decode durable retry target: {exc}") from exc
+            durable = _read_record_path(target, context="durable retry target")
             if durable == record:
                 return target
             raise JournalConflictError("journal sequence already exists with different content")
@@ -205,8 +218,16 @@ class JournalFileStore:
                 self._trip(JournalFailpoint.AFTER_TEMP_WRITE, temporary)
                 os.fsync(handle.fileno())
                 self._trip(JournalFailpoint.AFTER_FILE_FSYNC, temporary)
-            os.replace(temporary, target)
-            self._trip(JournalFailpoint.AFTER_REPLACE, target)
+            try:
+                _promote_no_replace(temporary, target)
+            except FileExistsError:
+                durable = _read_record_path(target, context="concurrent durable target")
+                if durable == record:
+                    return target
+                raise JournalConflictError(
+                    "concurrent journal promotion created different content"
+                )
+            self._trip(JournalFailpoint.AFTER_PROMOTE, target)
             _fsync_directory(directory)
         except BaseException:
             try:
@@ -225,11 +246,7 @@ class JournalFileStore:
         paths = sorted(directory.glob("*.json"))
         records: list[JournalRecord] = []
         for expected_sequence, path in enumerate(paths):
-            try:
-                payload = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-                raise JournalCorruptionError(f"cannot decode journal record {path.name}: {exc}") from exc
-            record = _record_from_payload(payload)
+            record = _read_record_path(path, context=f"journal record {path.name}")
             if record.transaction_id != transaction_id:
                 raise JournalCorruptionError("journal record transaction_id mismatch")
             if record.sequence != expected_sequence:
