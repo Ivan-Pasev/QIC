@@ -110,7 +110,9 @@ def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     assert manifest["implementation_sequence"]["G6"] == "MERGED"
     assert manifest["implementation_sequence"]["G7"] == "MERGED"
     assert manifest["implementation_sequence"]["G8"] == "MERGED"
-    assert manifest["implementation_sequence"]["RC0"] == "ACTIVE"
+    assert manifest["implementation_sequence"]["RC0"] == "MERGED"
+    assert manifest["implementation_sequence"]["G9"] == "ACTIVE"
+    assert manifest["release"]["phase"] == "RC0_QUALIFIED_PUBLICATION_PENDING"
     assert manifest["transition_profile"]["enabled"] == [
         family.value for family in sorted(ENABLED_FAMILIES, key=lambda item: item.value)
     ]
@@ -125,6 +127,7 @@ def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     assert manifest["qualification"]["release_blocking_on_survivor"] is True
     assert "No formal-runtime verification claim" in manifest["explicit_nonclaims"]
     assert "No hardware-tested claim" in manifest["explicit_nonclaims"]
+    assert "No durable crash-recovery claim while G9 is active" in manifest["explicit_nonclaims"]
     assert "does not certify" in manifest["claim_boundary"]
 
 
