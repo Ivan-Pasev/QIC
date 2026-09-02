@@ -10,6 +10,7 @@ from .canonical import (
 from .chrono import ChronoChain, ChronoEvent, ChronoEventType, WitnessRecord, WitnessSubject
 from .constitution import PRIME_LAWS, ConstitutionSnapshot
 from .digest import DIGEST_VERSION, DigestDomainError, digest_bytes, digest_hex
+from .journal import JournalPhase, JournalRecord, journal_phase_successors
 from .kbi import (
     ClaimRecord,
     ClaimStatus,
@@ -71,6 +72,8 @@ __all__ = [
     "FormalMaturity",
     "GrantState",
     "HardwareMaturity",
+    "JournalPhase",
+    "JournalRecord",
     "KBIContext",
     "KBIExecutionResult",
     "KBIExecutor",
@@ -94,5 +97,6 @@ __all__ = [
     "canonical_text",
     "digest_bytes",
     "digest_hex",
+    "journal_phase_successors",
     "ontology_from_id",
 ]
