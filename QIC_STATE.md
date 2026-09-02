@@ -6,7 +6,7 @@ Last updated: 2026-09-02
 
 **Phase:** Implementation Convergence
 
-**Active slice:** `QIC-G0 — Repository + Constitutional Spine`
+**Active slice:** `QIC-G1 — Canonical serializer + digest kernel`
 
 **Public repository:** `Ivan-Pasev/QIC`
 
@@ -14,56 +14,52 @@ Last updated: 2026-09-02
 
 ## Established
 
-- Dedicated public QIC repository exists.
-- Canonical Drive working tree exists.
-- Public README, claim boundary, architecture, roadmap, governance, contribution guide, and security policy exist.
-- G0 implementation issue exists as `#1`.
-- G0 implementation branch exists as `qic-g0/bootstrap`.
-- Draft implementation PR exists as `#2`.
-- Python 3.12+ installable project skeleton exists on the G0 branch.
-- `qic.core` contains an immutable genesis constitutional snapshot and explicit non-cumulative maturity labels.
+- Dedicated public QIC repository and canonical Drive working tree exist.
+- Professional public documentation, claim boundary, governance, contribution, security, roadmap, and architecture surfaces exist.
+- `QIC-G0 — Repository + Constitutional Spine` is closed and merged to `main` as commit `27da6862fe61f8efc394b3ac2b22443370f85cbf`.
+- G0 CI passed on Python 3.12 and 3.13 after correcting the non-cumulative maturity semantics.
+- `qic.core` contains the immutable genesis constitutional snapshot and explicit non-cumulative maturity labels.
 - Machine-readable constitution, maturity schema, and transition-registry seeds exist.
-- T4 Physical and T5 Evolutionary transitions remain explicitly `NOT_ENABLED` at G0.
-- Genesis tests and GitHub Actions CI exist; the initial PR head passed on Python 3.12 and 3.13 before a maturity-semantics correction.
-- Diff review caught and corrected a linear-maturity bug so `SIMULATED` no longer implies `FORMALLY_MODELED` (and vice versa).
-- Architectural implementation sequence `I00` through `I11` is documented in the canonical manuscript.
+- T4 Physical and T5 Evolutionary remain explicitly `NOT_ENABLED`.
+- G1 Issue exists as `#4` and branch `qic-g1/canonical-digest` is active.
+- G1 branch contains `QIC-CANONICAL/1.0`, domain-separated `QIC-DIGEST/1.0`, golden vectors, negative tests, and ADR-0002.
+- Architectural implementation sequence `I00` through `I11` remains documented in the canonical manuscript.
 - Distribution strategy exists for ChatGPT, Gemini, NotebookLM, GitHub public, local/CodexStation, and the Omega public-LLM container.
 
-## Not yet established
+## G1 implementation boundary
 
-- Deterministic canonical serializer and digest kernel (`QIC-G1`).
-- Authority/capability runtime (`QIC-G3`).
-- Transition/invariant execution engine (`QIC-G4`).
-- Chrono/witness implementation (`QIC-G5`).
-- Minimal KBI implementation (`QIC-G6`).
-- Genesis CLI (`QIC-G7`).
-- Adversarial constitutional closure (`QIC-G8`).
-- Lean/formal conformance artifacts.
-- FQNP reference federation.
-- Physical hardware qualification.
+Implemented on the active branch:
 
-These remain targets, not completed capabilities.
+- deterministic typed canonical UTF-8 JSON representation;
+- stable mapping-key ordering;
+- deterministic set/frozenset ordering by normalized canonical bytes;
+- explicit distinctions for list/tuple, bool/int, strings/integers;
+- dataclass and enum typed representations;
+- explicit rejection of floats, unknown objects, and non-string mapping keys;
+- SHA-256 digesting with explicit QIC version/domain separation;
+- fixed golden vectors and repeatability tests.
 
-## G0 review state
+Not implemented by G1:
 
-Current PR: https://github.com/Ivan-Pasev/QIC/pull/2
+- authority/capability runtime (`QIC-G3`);
+- transition/invariant execution engine (`QIC-G4`);
+- Chrono/witness implementation (`QIC-G5`);
+- minimal KBI (`QIC-G6`);
+- federation, physical control, or formal verification.
 
-G0 exit evidence currently includes:
+Canonical/digest identity demonstrates structural byte identity only and does not imply truth, authority, provenance correctness, safety, or execution success.
 
-- professional public documentation;
-- package skeleton;
-- constitutional/registry/schema surfaces;
-- executable genesis core objects;
-- genesis tests;
-- CI definition;
-- ADR-0001;
-- issue/branch/PR traceability.
+## Current G1 exit gate
 
-Final merge gate: corrected PR head must pass CI and the diff must remain free of maturity/authority overclaim.
+- open a G1 PR from `qic-g1/canonical-digest`;
+- require CI on Python 3.12 and 3.13;
+- inspect the full diff for unstable serialization or accidental semantic/authority claims;
+- verify golden vectors remain byte- and digest-stable;
+- merge only after the corrected head is green.
 
 ## Next admissible action
 
-Confirm CI on the corrected PR head. If green, mark PR #2 ready and merge G0. Then close Issue #1 if its full exit gate remains satisfied and open `QIC-G1 — Canonical serializer + digest kernel`.
+Open and qualify the G1 PR. If green and review-clean, merge G1, close Issue #4, and instantiate `QIC-G2 — Root ontology + maturity vector`.
 
 ## Continuation rule
 
