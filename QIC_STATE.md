@@ -1,12 +1,14 @@
 # QIC State
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 ## Canonical status
 
-**Phase:** Post-RC0 reliability engineering
+**Phase:** Post-G9 evidence-driven expansion
 
-**Active slice:** `QIC-G9 — Durable transaction journal + crash recovery`
+**Completed slice:** `QIC-G9 — Durable transaction journal + crash recovery`
+
+**Next slice:** `QIC-G10 — Performance Observatory + Workload Atlas + Scaling/Bottleneck Evidence` (not yet activated)
 
 **Release candidate baseline:** `1.0.0rc0`
 
@@ -16,58 +18,40 @@ Last updated: 2026-09-02
 
 ## Qualified baseline
 
-- G0–G7 are merged constitutional implementation slices.
+- G0–G7 merged constitutional implementation slices.
 - G8 adversarial qualification merged as `b0c4f446dce21317cbd4cfc943633ee57507a8c8`.
 - RC0 integrated release convergence merged via PR #21 as `588694dda816c6cb712d1812c6bbe23ca5092198`.
 - RC0 exact evidence head `7a3234cb433e3b61bc9f858e8de9b0645378a845` passed final run `33675547670` with source tests, clean wheel/sdist installs, installed verification/qualification, and cross-Python reproducibility.
 - RC0 publication metadata PR #25 merged as `74acec6c1d6569e04eec51c8745f718009f24d3d`; Issue #24 tracks the still-unpublished GitHub `v1.0.0rc0` tag/release.
+- G9 durable journal/recovery merged via PR #23 as `8b297fea49d6dc76c0236fa9cca6bf8d9af7f249`.
+- G9 documentation-sealed head `883f4bea90cc4c59f66e097f8415d39b90940658` passed full run `33683360428` including Python 3.12/3.13 source suites, clean wheel/sdist verification, inherited G8 qualification surfaces, and RC0 reproducibility.
+- Issue #22 is CLOSED / COMPLETED.
 - T4 Physical and T5 Evolutionary remain `NOT_ENABLED`.
 
-## G9 execution
+## G9 closure
 
-- Issue: #22
-- Draft PR: #23
-- Branch: `qic-g9/durable-recovery`
-- G9 remains draft until the complete recovery contract is qualified.
-
-Implemented on the G9 branch:
+G9 establishes a bounded local durability/recovery substrate for the reference Python runtime:
 
 - immutable `JournalPhase` and hash-linked `JournalRecord`;
-- legal PREPARED → VALIDATED → STATE_COMMITTED → CHRONO_COMMITTED → WITNESS_COMMITTED → COMPLETE progression plus terminal ABORTED/QUARANTINED;
-- phase-specific state/outcome/Chrono/witness digest requirements;
-- explicit protection against transaction/sequence/phase/link rebinding;
-- `JournalFileStore` with unique same-directory temp files, flush/fsync, atomic **no-replace hard-link promotion**, temp unlink, and directory fsync;
-- immutable persisted records with schema/digest/sequence/link/phase validation;
-- idempotent retry of identical durable records and conflict rejection for divergent duplicates;
-- deterministic journal failpoints before/after atomic promotion;
-- stale crash temp files ignored by journal loading and unable to block future append;
-- concurrent conflicting promotion cannot overwrite the existing durable winner;
-- startup scanning that contains corrupt transactions without hiding valid ones;
-- phase-specific nonexecuting `assess_recovery()` classification;
-- `DurableArtifactView` and conservative `reconcile_recovery()`;
-- mismatch/ahead-of-journal evidence quarantines instead of inferred forward progress;
-- immutable `RecoveryEvidenceBundle` bound to exact transaction, journal sequence, and journal-head digest;
-- `RecoveryEvidenceStore` with the same no-replace immutable promotion policy and exact-retry idempotence;
-- restart-idempotent reconciliation and no-double-state-commit classification;
-- deterministic crash/restart campaign for state, Chrono, and witness boundaries;
-- recovery schema/runtime parity checks and ADR-0011;
-- G9 traceability map.
-
-## Defects discovered and contained during G9
-
-1. `JournalRecord.successor(phase, **changes)` allowed Python argument binding to throw before QIC could explicitly reject forged `phase=` rebinding. The API parameter is now `next_phase`, so protected-field rebinding reaches the constitutional guard and fails with the intended QIC error.
-2. The initial durable-store append ordering rejected an exact retry of an already-durable terminal record before checking idempotence. Exact durable duplicates are now recognized first; conflicting duplicates remain fail-closed.
-3. Initial temp→target promotion used `os.replace`, which could overwrite a concurrent durable winner after a stale pre-check. Promotion now uses an atomic no-replace hard link and explicit same/different winner handling.
-4. A fixed temp filename could become stale after a real process death and block later writers. Both stores now use unique same-directory temp names; stale temp residue is ignored by canonical record loading.
-5. Concurrent identical-winner reconciliation initially could return idempotently while leaving the losing unique temp file. Both stores now remove that temp before returning.
-
-## Current evidence state
-
-Head `e360330c923db97349722bb3b7cd8b3647135df7` passed CI run `33680622144` completely, including source tests on Python 3.12/3.13 and inherited RC0 artifact/reproducibility regression gates.
-
-Subsequent G9 commits add immutable recovery evidence bundles, restart/crash/race qualification, schema, ADR, traceability, manifest/state synchronization, and the no-replace/stale-temp corrections discovered during adversarial review. The exact final head must pass a fresh complete CI run before PR #23 can leave draft.
+- PREPARED → VALIDATED → STATE_COMMITTED → CHRONO_COMMITTED → WITNESS_COMMITTED → COMPLETE plus terminal ABORTED/QUARANTINED;
+- unique same-directory temp files;
+- file fsync + directory fsync reference policy;
+- atomic no-replace hard-link publication;
+- exact retry idempotence;
+- divergent/concurrent conflict without overwrite;
+- startup corruption containment;
+- `DurableArtifactView` and conservative reconciliation;
+- immutable exact-head-bound `RecoveryEvidenceBundle` / `RecoveryEvidenceStore`;
+- no-double-state-commit classification;
+- ahead-of-journal and digest-mismatch quarantine;
+- rejected transition restart remains non-commit;
+- deterministic crash/restart/race/corruption tests;
+- recovery schema/runtime parity and ADR-0011;
+- `RECOVERY_QUALIFICATION_G9.md` as the human-readable qualification record.
 
 ## Recovery law
+
+`RecoveryMayReconcileRecordedIntent != RecoveryMayInventAuthorityOrCommit`
 
 `artifact ahead of journal OR digest mismatch OR missing required evidence => QUARANTINE / NO SYNTHESIS`
 
@@ -75,18 +59,26 @@ Subsequent G9 commits add immutable recovery evidence bundles, restart/crash/rac
 
 `concurrent durable target exists => IDENTICAL = IDEMPOTENT; DIFFERENT = CONFLICT; NEVER OVERWRITE`
 
-Recovery classification is descriptive only. It does not mint authority, replay a transition, create KBI state, append Chrono, or synthesize a witness.
-
 ## Claim boundary
 
-The G9 reference implementation tests local durability/restart behavior under the declared Python/OS/filesystem semantics and a filesystem supporting the required same-filesystem hard-link operation. It is not a universal filesystem/controller/VM/network-storage/power-loss proof. While G9 is active, QIC retains the public nonclaim of durable crash-recovery completion.
+G9 qualifies tested local reference durability/restart properties only. It is not a universal filesystem/controller/VM/network-storage/power-loss proof and does not automatically replay authority-sensitive consequences.
 
-Public maturity remains semantic `TESTED`, evidence `SUPPORTED`, formal `NONE`, hardware `NONE`, deployment `LOCAL`. G9 adds no federation, distributed consensus, T4/T5 enablement, physical-control readiness, formal-runtime proof, hardware qualification, or semantic/scientific truth certification.
+Public maturity remains semantic `TESTED`, evidence `SUPPORTED`, formal `NONE`, hardware `NONE`, deployment `LOCAL`.
+
+G9 adds no federation, distributed consensus, T4/T5 enablement, physical-control readiness, formal-runtime proof, hardware qualification, production-security certification, or semantic/scientific truth certification.
 
 ## Next admissible action
 
-Run fresh exact-head Python 3.12/3.13 CI and inherited RC0 regression gates; inspect the complete G9 diff adversarially for filesystem, idempotence, evidence-binding, authority-synthesis, and double-commit gaps. If review finds defects, fix and rerun. Mark PR #23 ready and merge only after the corrected exact head is green and the G9 claim boundary remains conservative.
+Open G10 as a **measurement-first performance slice** before federation or accelerator work:
+
+1. implement a read-only Performance Observatory;
+2. define deterministic workload/corpus profiles;
+3. measure end-to-end and decomposed cost without bypassing authority, invariants, Chrono, witness, or serialization;
+4. establish scaling curves and bottleneck classifications;
+5. require `NoAcceleratorWithoutMeasuredBottleneck`;
+6. preserve G9 durability/recovery regression tests and RC0 distribution gates;
+7. do not begin FQNP federation or hardware acceleration until evidence justifies the next architectural move.
 
 ## Continuation rule
 
-Preserve RC0 as a frozen qualified baseline. Every substantial reliability change must maintain claim boundaries, T4/T5 disabled status, source↔packaged manifest parity where applicable, and evidence-before-merge discipline.
+Preserve RC0 and G9 as frozen qualified baselines. Every substantial next-layer change must maintain claim boundaries, T4/T5 disabled status, source↔packaged manifest parity where applicable, and evidence-before-merge discipline.
