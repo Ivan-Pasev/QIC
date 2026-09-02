@@ -5,16 +5,17 @@ replay authority, execute transitions, synthesize state, append Chrono events,
 or create witnesses. Recovery classification is descriptive: callers must
 supply and separately verify any authoritative artifacts required to continue.
 
-The reference store uses write-temp -> flush/fsync -> atomic no-replace hard-link
-promotion -> temp unlink -> directory fsync. This is a local-filesystem
-durability policy, not a claim about every filesystem, storage controller, VM,
-network filesystem, or power-failure mode.
+The reference store uses unique same-directory temp write -> flush/fsync ->
+atomic no-replace hard-link promotion -> temp unlink -> directory fsync. This is
+a local-filesystem durability policy, not a claim about every filesystem,
+storage controller, VM, network filesystem, or power-failure mode.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import uuid
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -134,12 +135,13 @@ def _fsync_directory(path: Path) -> None:
         os.close(descriptor)
 
 
+def _unique_temp_path(target: Path) -> Path:
+    return target.parent / f".{target.name}.tmp.{os.getpid()}.{uuid.uuid4().hex}"
+
+
 def _promote_no_replace(temporary: Path, target: Path) -> None:
     """Atomically publish *temporary* without replacing an existing target."""
 
-    # Hard-link creation is atomic with respect to target existence on the local
-    # filesystem. Unlike os.replace(), it cannot silently overwrite a record
-    # another process promoted after our earlier target pre-check.
     os.link(temporary, target)
     temporary.unlink()
 
@@ -209,7 +211,7 @@ class JournalFileStore:
             if not previous.may_advance_to(record.phase):
                 raise JournalConflictError("illegal durable journal phase transition")
 
-        temporary = target.with_suffix(".json.tmp")
+        temporary = _unique_temp_path(target)
         data = _encoded_record(record)
         try:
             with temporary.open("xb") as handle:
