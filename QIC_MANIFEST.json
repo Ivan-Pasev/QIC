@@ -1,0 +1,38 @@
+{
+  "schema": "qic.manifest.v1",
+  "project": "QIC",
+  "package": "qic-core",
+  "implementation_sequence": {
+    "G0": "MERGED",
+    "G1": "MERGED",
+    "G2": "MERGED",
+    "G3": "MERGED",
+    "G4": "MERGED",
+    "G5": "MERGED",
+    "G6": "MERGED",
+    "G7": "ACTIVE"
+  },
+  "transition_profile": {
+    "enabled": ["T0", "T1", "T2", "T3"],
+    "not_enabled": ["T4", "T5"]
+  },
+  "authority_domains": ["A_E", "A_C", "A_P", "A_X"],
+  "root_ontology": ["STATE", "ACTOR", "OPERATION", "CONSTRAINT", "EVIDENCE", "RESOURCE", "WITNESS"],
+  "maturity": {
+    "semantic": "TESTED",
+    "evidence": "SUPPORTED",
+    "formal": "NONE",
+    "hardware": "NONE",
+    "deployment": "LOCAL"
+  },
+  "claim_boundary": "QIC G0-G7 verification establishes declared local structural properties only. It does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, or deployment readiness.",
+  "explicit_nonclaims": [
+    "No formal-runtime verification claim",
+    "No hardware-tested claim",
+    "No physical-control claim",
+    "No federation claim",
+    "No distributed-consensus claim",
+    "No durable crash-recovery claim",
+    "No universal-truth claim"
+  ]
+}
