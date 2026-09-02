@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [project.scripts]
-qic = "qic.cli:main"
+qic = "qic.release_cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -31,7 +31,7 @@ dev = [
 include = ["qic*"]
 
 [tool.setuptools.package-data]
-"qic.resources" = ["*.json", "*.md"]
+"qic.resources" = ["*.json", "*.md", "registry/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
