@@ -10,7 +10,8 @@
     "G4": "MERGED",
     "G5": "MERGED",
     "G6": "MERGED",
-    "G7": "ACTIVE"
+    "G7": "MERGED",
+    "G8": "ACTIVE"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -25,7 +26,13 @@
     "hardware": "NONE",
     "deployment": "LOCAL"
   },
-  "claim_boundary": "QIC G0-G7 verification establishes declared local structural properties only. It does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, or deployment readiness.",
+  "qualification": {
+    "active_slice": "G8",
+    "critical_modeled_mutants": 5,
+    "release_blocking_on_survivor": true,
+    "scope": "local structural qualification over G0-G7"
+  },
+  "claim_boundary": "QIC G0-G8 verification and qualification establish declared local structural properties only. They do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, deployment readiness, cryptographic identity, federation, distributed consensus, or durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",
