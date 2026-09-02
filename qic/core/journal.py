@@ -151,18 +151,20 @@ class JournalRecord:
             raise TypeError("phase must be JournalPhase")
         return phase in _ALLOWED_SUCCESSORS[self.phase]
 
-    def successor(self, phase: JournalPhase, **changes: object) -> "JournalRecord":
+    def successor(self, next_phase: JournalPhase, **changes: object) -> "JournalRecord":
         """Return a hash-linked legal successor; never mutate the current record."""
 
-        if not self.may_advance_to(phase):
-            raise ValueError(f"illegal journal phase transition: {self.phase.value}->{phase.value}")
+        if not self.may_advance_to(next_phase):
+            raise ValueError(
+                f"illegal journal phase transition: {self.phase.value}->{next_phase.value}"
+            )
         protected = {"transaction_id", "sequence", "phase", "previous_record_digest"}
         if protected & changes.keys():
             raise ValueError("successor identity/link fields are managed by the journal model")
         return replace(
             self,
             sequence=self.sequence + 1,
-            phase=phase,
+            phase=next_phase,
             previous_record_digest=self.digest,
             **changes,
         )
