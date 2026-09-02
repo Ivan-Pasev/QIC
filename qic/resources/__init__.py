@@ -9,7 +9,12 @@ from __future__ import annotations
 
 import json
 from importlib.resources import files
+from pathlib import Path
 from typing import Any
+
+
+def resource_root() -> Path:
+    return Path(str(files(__package__)))
 
 
 def resource_text(name: str) -> str:
