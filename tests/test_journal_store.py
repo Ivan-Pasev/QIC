@@ -131,19 +131,31 @@ def test_fail_after_promote_leaves_valid_record_for_recovery(tmp_path: Path) -> 
     assert JournalFileStore(root).load("tx-1") == (record,)
 
 
+def test_stale_unique_temp_file_does_not_block_restart_append(tmp_path: Path) -> None:
+    root = tmp_path / "journal"
+    transaction = root / "tx-1"
+    transaction.mkdir(parents=True)
+    (transaction / ".00000000.json.tmp.stale-process.stale-id").write_text(
+        "partial-crash-bytes", encoding="utf-8"
+    )
+    record = prepared()
+    assert JournalFileStore(root).append(record).exists()
+    assert JournalFileStore(root).load("tx-1") == (record,)
+
+
 def test_concurrent_conflicting_promotion_never_overwrites_winner(tmp_path: Path) -> None:
     desired = prepared(proposal_digest="desired")
     competing = prepared(proposal_digest="competing")
 
     staging = JournalFileStore(tmp_path / "staging")
     competing_bytes = staging.append(competing).read_bytes()
+    root = tmp_path / "journal"
+    target = root / "tx-1" / "00000000.json"
 
     def inject_winner(point: JournalFailpoint, temporary: Path) -> None:
         if point is JournalFailpoint.AFTER_FILE_FSYNC:
-            target = temporary.with_suffix("")
             target.write_bytes(competing_bytes)
 
-    root = tmp_path / "journal"
     store = JournalFileStore(root, failpoint=inject_winner)
     with pytest.raises(JournalConflictError, match="concurrent journal promotion"):
         store.append(desired)
