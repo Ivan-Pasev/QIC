@@ -1,6 +1,6 @@
 # QIC G8 Qualification Report
 
-**Status:** qualification candidate PASS; final documentation-sealed head pending one last CI recheck before merge
+**Status:** qualification PASS candidate; merge is permitted only if the exact report-sealed PR head is green on Python 3.12 and 3.13.
 
 **Scope:** adversarial constitutional qualification over the implemented G0–G7 local genesis stack.
 
@@ -36,7 +36,7 @@ These are deterministic modeled defects, not a claim of exhaustive source-code m
 
 ## Qualification history
 
-### First G8 CI campaign — expected block
+### First G8 CI campaign — blocked as designed
 
 PR #19 initial qualification head: `f524d5905d787e4f1ce59680c828596510351856`
 
@@ -66,7 +66,17 @@ GitHub Actions run: `33656980528`
 - public maturity remained `formal=NONE`, `hardware=NONE`, `deployment=LOCAL`;
 - aggregate `qic --json verify` and targeted `qic --json verify qualification` passed.
 
-Because this report commit changes the PR head after the corrected runtime/test evidence was recorded, the documentation-sealed head must receive one final green CI run before merge. No further code change is admissible without restarting the exact-head qualification requirement.
+### Documentation-sealed pre-merge recheck — PASS
+
+Report-predecessor head: `3c9f668c3723864e8fac79416144538d005a01d0`
+
+GitHub Actions run: `33657163256`
+
+- Python 3.12: full suite passed
+- Python 3.13: full suite passed
+- workflow conclusion: **success**
+
+This report normalization itself changes only documentation. The exact head containing this normalized report must receive one additional green Python 3.12/3.13 CI run before PR #19 is merged. The GitHub PR/merge record is the authoritative evidence that this final exact-head condition was satisfied; no further repository-content change is admissible before merge without restarting the exact-head qualification gate.
 
 ## Failure atlas
 
@@ -93,4 +103,4 @@ The five modeled mutants are targeted constitutional defect models, not exhausti
 
 ## RC0 gate
 
-`QIC-v1 RC0` becomes admissible only after the documentation-sealed PR head also passes Python 3.12/3.13 CI and PR #19 is merged without further code changes.
+`QIC-v1 RC0` becomes admissible only after the exact report-sealed PR head passes Python 3.12/3.13 CI and PR #19 is merged without further repository-content changes.
