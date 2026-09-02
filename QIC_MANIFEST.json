@@ -13,7 +13,7 @@
     "G7": "MERGED",
     "G8": "MERGED",
     "RC0": "MERGED",
-    "G9": "ACTIVE"
+    "G9": "MERGED"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -29,28 +29,31 @@
     "deployment": "LOCAL"
   },
   "qualification": {
-    "slice": "G8",
+    "slice": "G9",
     "status": "MERGED",
-    "critical_modeled_mutants": 5,
+    "g8_critical_modeled_mutants": 5,
     "release_blocking_on_survivor": true,
-    "scope": "local structural qualification over G0-G7"
+    "scope": "local structural qualification through G9; durability claims remain limited to the declared reference environment"
   },
   "release": {
     "candidate": "1.0.0rc0",
     "phase": "RC0_QUALIFIED_PUBLICATION_PENDING"
   },
-  "active_engineering": {
+  "last_completed_engineering": {
     "slice": "G9",
+    "merge_commit": "8b297fea49d6dc76c0236fa9cca6bf8d9af7f249",
+    "qualified_head": "883f4bea90cc4c59f66e097f8415d39b90940658",
+    "ci_run": "33683360428",
     "scope": "local durable transaction journal and conservative crash-recovery classification"
   },
-  "claim_boundary": "QIC G0-G8 verification and qualification establish declared local structural properties only. RC0 reproducible packaging and active G9 recovery engineering do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, deployment readiness, cryptographic identity, federation, distributed consensus, hardware qualification, or universal durable crash recovery.",
+  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties only. RC0 reproducible packaging and merged G9 recovery qualification do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, cryptographic identity, federation, distributed consensus, hardware qualification, or universal durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",
     "No physical-control claim",
     "No federation claim",
     "No distributed-consensus claim",
-    "No durable crash-recovery claim while G9 is active",
+    "No universal durable crash-recovery guarantee",
     "No universal-truth claim"
   ]
 }

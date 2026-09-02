@@ -37,7 +37,7 @@ def test_release_manifest_keeps_constitutional_nonclaims() -> None:
     manifest = resource_json("QIC_MANIFEST.json")
     assert manifest["implementation_sequence"]["G8"] == "MERGED"
     assert manifest["implementation_sequence"]["RC0"] == "MERGED"
-    assert manifest["implementation_sequence"]["G9"] == "ACTIVE"
+    assert manifest["implementation_sequence"]["G9"] == "MERGED"
     assert manifest["release"]["phase"] == "RC0_QUALIFIED_PUBLICATION_PENDING"
     assert manifest["transition_profile"]["not_enabled"] == ["T4", "T5"]
     assert manifest["maturity"] == {
@@ -47,4 +47,5 @@ def test_release_manifest_keeps_constitutional_nonclaims() -> None:
         "hardware": "NONE",
         "deployment": "LOCAL",
     }
-    assert "No durable crash-recovery claim while G9 is active" in manifest["explicit_nonclaims"]
+    assert "No universal durable crash-recovery guarantee" in manifest["explicit_nonclaims"]
+    assert manifest["last_completed_engineering"]["slice"] == "G9"
