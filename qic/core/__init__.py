@@ -11,6 +11,16 @@ from .chrono import ChronoChain, ChronoEvent, ChronoEventType, WitnessRecord, Wi
 from .constitution import PRIME_LAWS, ConstitutionSnapshot
 from .digest import DIGEST_VERSION, DigestDomainError, digest_bytes, digest_hex
 from .journal import JournalPhase, JournalRecord, journal_phase_successors
+from .journal_store import (
+    JournalConflictError,
+    JournalCorruptionError,
+    JournalFailpoint,
+    JournalFileStore,
+    JournalStoreError,
+    RecoveryAssessment,
+    RecoveryClass,
+    assess_recovery,
+)
 from .kbi import (
     ClaimRecord,
     ClaimStatus,
@@ -72,8 +82,13 @@ __all__ = [
     "FormalMaturity",
     "GrantState",
     "HardwareMaturity",
+    "JournalConflictError",
+    "JournalCorruptionError",
+    "JournalFailpoint",
+    "JournalFileStore",
     "JournalPhase",
     "JournalRecord",
+    "JournalStoreError",
     "KBIContext",
     "KBIExecutionResult",
     "KBIExecutor",
@@ -82,6 +97,8 @@ __all__ = [
     "MaturityVector",
     "PRIME_LAWS",
     "ROOT_ONTOLOGY",
+    "RecoveryAssessment",
+    "RecoveryClass",
     "RootOntology",
     "SemanticMaturity",
     "StateSnapshot",
@@ -93,6 +110,7 @@ __all__ = [
     "TransitionSpec",
     "WitnessRecord",
     "WitnessSubject",
+    "assess_recovery",
     "canonical_bytes",
     "canonical_text",
     "digest_bytes",
