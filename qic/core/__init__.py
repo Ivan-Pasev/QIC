@@ -10,6 +10,17 @@ from .canonical import (
 from .chrono import ChronoChain, ChronoEvent, ChronoEventType, WitnessRecord, WitnessSubject
 from .constitution import PRIME_LAWS, ConstitutionSnapshot
 from .digest import DIGEST_VERSION, DigestDomainError, digest_bytes, digest_hex
+from .journal import JournalPhase, JournalRecord, journal_phase_successors
+from .journal_store import (
+    JournalConflictError,
+    JournalCorruptionError,
+    JournalFailpoint,
+    JournalFileStore,
+    JournalStoreError,
+    RecoveryAssessment,
+    RecoveryClass,
+    assess_recovery,
+)
 from .kbi import (
     ClaimRecord,
     ClaimStatus,
@@ -33,6 +44,17 @@ from .maturity_vector import (
     SemanticMaturity,
 )
 from .ontology import ROOT_ONTOLOGY, RootOntology, ontology_from_id
+from .recovery import (
+    DurableArtifactView,
+    ReconciliationClass,
+    ReconciliationResult,
+    reconcile_recovery,
+)
+from .recovery_store import (
+    RecoveryEvidenceBundle,
+    RecoveryEvidenceStore,
+    reconcile_evidence_bundle,
+)
 from .transition import (
     ENABLED_FAMILIES,
     FAMILY_AUTHORITY,
@@ -61,6 +83,7 @@ __all__ = [
     "ConstitutionSnapshot",
     "DeploymentMaturity",
     "DigestDomainError",
+    "DurableArtifactView",
     "ENABLED_FAMILIES",
     "EvidenceBinding",
     "EvidenceClass",
@@ -71,6 +94,13 @@ __all__ = [
     "FormalMaturity",
     "GrantState",
     "HardwareMaturity",
+    "JournalConflictError",
+    "JournalCorruptionError",
+    "JournalFailpoint",
+    "JournalFileStore",
+    "JournalPhase",
+    "JournalRecord",
+    "JournalStoreError",
     "KBIContext",
     "KBIExecutionResult",
     "KBIExecutor",
@@ -79,6 +109,12 @@ __all__ = [
     "MaturityVector",
     "PRIME_LAWS",
     "ROOT_ONTOLOGY",
+    "ReconciliationClass",
+    "ReconciliationResult",
+    "RecoveryAssessment",
+    "RecoveryClass",
+    "RecoveryEvidenceBundle",
+    "RecoveryEvidenceStore",
     "RootOntology",
     "SemanticMaturity",
     "StateSnapshot",
@@ -90,9 +126,13 @@ __all__ = [
     "TransitionSpec",
     "WitnessRecord",
     "WitnessSubject",
+    "assess_recovery",
     "canonical_bytes",
     "canonical_text",
     "digest_bytes",
     "digest_hex",
+    "journal_phase_successors",
     "ontology_from_id",
+    "reconcile_evidence_bundle",
+    "reconcile_recovery",
 ]

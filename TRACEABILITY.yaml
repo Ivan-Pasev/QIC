@@ -109,3 +109,39 @@ slices:
       - no new constitutional capability
       - no T4/T5 enablement
       - no formal or hardware maturity increase
+  G9:
+    title: Durable Transaction Journal + Crash Recovery
+    implementation:
+      - qic/core/journal.py
+      - qic/core/journal_store.py
+      - qic/core/recovery.py
+      - qic/core/recovery_store.py
+      - schemas/recovery.schema.json
+      - RECOVERY_QUALIFICATION_G9.md
+    tests:
+      - tests/test_journal.py
+      - tests/test_journal_store.py
+      - tests/test_recovery_reconciliation.py
+      - tests/test_recovery_store.py
+      - tests/test_recovery_crash_campaign.py
+      - tests/test_recovery_corruption_cases.py
+      - tests/test_recovery_rejected_outcomes.py
+      - tests/test_recovery_schema.py
+    recovery_contract:
+      - immutable hash-linked journal records
+      - fsync plus atomic no-replace hard-link reference persistence
+      - unique same-directory temp files so stale crash residue does not block retry
+      - concurrent conflicting promotion cannot overwrite an existing winner
+      - exact journal-head-bound recovery evidence receipts
+      - conservative mismatch and ahead-of-journal quarantine
+      - no evidence synthesis
+      - rejected G4 outcomes remain non-commits after restart
+      - no double state-commit classification after STATE_COMMITTED
+      - restart/idempotent reconciliation
+    adr: docs/adr/0011-durable-journal-and-crash-recovery.md
+    nonclaims:
+      - no universal filesystem durability proof
+      - no automatic authority restoration
+      - no automatic transition replay
+      - no T4/T5 enablement
+      - no federation or physical effect

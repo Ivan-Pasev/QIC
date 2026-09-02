@@ -4,11 +4,11 @@ Last updated: 2026-09-02
 
 ## Canonical status
 
-**Phase:** Release Convergence
+**Phase:** Post-RC0 reliability engineering
 
-**Active slice:** `QIC-v1 RC0 — Integrated genesis release convergence`
+**Active slice:** `QIC-G9 — Durable transaction journal + crash recovery`
 
-**Release candidate:** `1.0.0rc0`
+**Release candidate baseline:** `1.0.0rc0`
 
 **Public repository:** `Ivan-Pasev/QIC`
 
@@ -17,49 +17,76 @@ Last updated: 2026-09-02
 ## Qualified baseline
 
 - G0–G7 are merged constitutional implementation slices.
-- G8 merged via PR #19 as `b0c4f446dce21317cbd4cfc943633ee57507a8c8`.
-- G8 report-sealed head `d0416802c58590e67d580826c2868ee14bf74477` passed Python 3.12/3.13 run `33657284850`.
+- G8 adversarial qualification merged as `b0c4f446dce21317cbd4cfc943633ee57507a8c8`.
+- RC0 integrated release convergence merged via PR #21 as `588694dda816c6cb712d1812c6bbe23ca5092198`.
+- RC0 exact evidence head `7a3234cb433e3b61bc9f858e8de9b0645378a845` passed final run `33675547670` with source tests, clean wheel/sdist installs, installed verification/qualification, and cross-Python reproducibility.
+- RC0 publication metadata PR #25 merged as `74acec6c1d6569e04eec51c8745f718009f24d3d`; Issue #24 tracks the still-unpublished GitHub `v1.0.0rc0` tag/release.
 - T4 Physical and T5 Evolutionary remain `NOT_ENABLED`.
-- RC0 Issue #20 and PR #21 operate on branch `qic-v1/rc0-convergence`.
 
-## RC0 release engineering
+## G9 execution
 
-RC0 adds no constitutional capability. It normalizes package version to `1.0.0rc0`, packages manifest/claim-boundary/registries under `qic.resources`, uses a read-only installed-artifact CLI adapter, and requires source↔package parity.
+- Issue: #22
+- Draft PR: #23
+- Branch: `qic-g9/durable-recovery`
+- G9 remains draft until the complete recovery contract is qualified.
 
-CI now requires, on Python 3.12 and 3.13, source-suite PASS, wheel+sdist build, deterministic sdist normalization, required resource inspection, clean wheel install outside checkout, clean normalized-sdist install, aggregate verification PASS, G8 qualification PASS, runtime/metadata version equality, SHA-256 inventory generation, and cross-Python equality of artifact hashes and verification evidence.
+Implemented on the G9 branch:
 
-## RC0 defects discovered and contained
+- immutable `JournalPhase` and hash-linked `JournalRecord`;
+- legal PREPARED → VALIDATED → STATE_COMMITTED → CHRONO_COMMITTED → WITNESS_COMMITTED → COMPLETE progression plus terminal ABORTED/QUARANTINED;
+- phase-specific state/outcome/Chrono/witness digest requirements;
+- explicit protection against transaction/sequence/phase/link rebinding;
+- `JournalFileStore` with unique same-directory temp files, flush/fsync, atomic **no-replace hard-link promotion**, temp unlink, and directory fsync;
+- immutable persisted records with schema/digest/sequence/link/phase validation;
+- idempotent retry of identical durable records and conflict rejection for divergent duplicates;
+- deterministic journal failpoints before/after atomic promotion;
+- stale crash temp files ignored by journal loading and unable to block future append;
+- concurrent conflicting promotion cannot overwrite the existing durable winner;
+- startup scanning that contains corrupt transactions without hiding valid ones;
+- phase-specific nonexecuting `assess_recovery()` classification;
+- `DurableArtifactView` and conservative `reconcile_recovery()`;
+- mismatch/ahead-of-journal evidence quarantines instead of inferred forward progress;
+- immutable `RecoveryEvidenceBundle` bound to exact transaction, journal sequence, and journal-head digest;
+- `RecoveryEvidenceStore` with the same no-replace immutable promotion policy and exact-retry idempotence;
+- restart-idempotent reconciliation and no-double-state-commit classification;
+- deterministic crash/restart campaign for state, Chrono, and witness boundaries;
+- recovery schema/runtime parity checks and ADR-0011;
+- G9 traceability map.
 
-1. Editable-source verification depended on repository-relative metadata; packaged resources now remove that dependency.
-2. The first artifact-aware claim audit self-detected its own forbidden-token literals; the final adapter restores G8's original audit scope over the real CLI implementation.
-3. Independent archives initially differed only in container metadata. A fixed build epoch made wheels reproducible, and deterministic sdist normalization now fixes tar/gzip member metadata without changing source file bytes.
+## Defects discovered and contained during G9
 
-## Current evidence
+1. `JournalRecord.successor(phase, **changes)` allowed Python argument binding to throw before QIC could explicitly reject forged `phase=` rebinding. The API parameter is now `next_phase`, so protected-field rebinding reaches the constitutional guard and fails with the intended QIC error.
+2. The initial durable-store append ordering rejected an exact retry of an already-durable terminal record before checking idempotence. Exact durable duplicates are now recognized first; conflicting duplicates remain fail-closed.
+3. Initial temp→target promotion used `os.replace`, which could overwrite a concurrent durable winner after a stale pre-check. Promotion now uses an atomic no-replace hard link and explicit same/different winner handling.
+4. A fixed temp filename could become stale after a real process death and block later writers. Both stores now use unique same-directory temp names; stale temp residue is ignored by canonical record loading.
+5. Concurrent identical-winner reconciliation initially could return idempotently while leaving the losing unique temp file. Both stores now remove that temp before returning.
 
-Candidate head `fef715b716c6e9927e3c1b23b0c35be9daba8715` passed full GitHub Actions run `33675312598`:
+## Current evidence state
 
-- source tests: PASS on Python 3.12 and 3.13;
-- wheel clean-install verification: PASS on both;
-- normalized-sdist clean-install verification: PASS on both;
-- aggregate `qic --json verify`: PASS;
-- `qic --json verify qualification`: PASS;
-- cross-Python reproducibility job: PASS.
+Head `e360330c923db97349722bb3b7cd8b3647135df7` passed CI run `33680622144` completely, including source tests on Python 3.12/3.13 and inherited RC0 artifact/reproducibility regression gates.
 
-Reproducible artifact SHA-256 values:
+Subsequent G9 commits add immutable recovery evidence bundles, restart/crash/race qualification, schema, ADR, traceability, manifest/state synchronization, and the no-replace/stale-temp corrections discovered during adversarial review. The exact final head must pass a fresh complete CI run before PR #23 can leave draft.
 
-- wheel: `4b6c7af7113db82fbdd55b42e94cbb6a960b35a54eb0ee88876ffa3f3b60b1a6`
-- normalized sdist: `4d248bb4aef7ae8892eecdc711e6ef7e82661d8e63f39edb2b2903b85d6a221d`
+## Recovery law
 
-The release notes/state sealing these values moved the branch head after that run. Therefore RC0 is still **ACTIVE** until the exact evidence-sealed head passes the same complete gate and the PR diff is reviewed.
+`artifact ahead of journal OR digest mismatch OR missing required evidence => QUARANTINE / NO SYNTHESIS`
+
+`STATE_COMMITTED + exact state/outcome evidence => next admissible boundary is CHRONO commit, never state commit again`
+
+`concurrent durable target exists => IDENTICAL = IDEMPOTENT; DIFFERENT = CONFLICT; NEVER OVERWRITE`
+
+Recovery classification is descriptive only. It does not mint authority, replay a transition, create KBI state, append Chrono, or synthesize a witness.
 
 ## Claim boundary
 
-RC0 release engineering does not upgrade maturity. Public maturity remains semantic `TESTED`, evidence `SUPPORTED`, formal `NONE`, hardware `NONE`, deployment `LOCAL`. RC0 is not formal verification, security certification, hardware qualification, physical-control readiness, federation/distributed-consensus evidence, durable crash-recovery proof, or semantic/scientific truth certification.
+The G9 reference implementation tests local durability/restart behavior under the declared Python/OS/filesystem semantics and a filesystem supporting the required same-filesystem hard-link operation. It is not a universal filesystem/controller/VM/network-storage/power-loss proof. While G9 is active, QIC retains the public nonclaim of durable crash-recovery completion.
+
+Public maturity remains semantic `TESTED`, evidence `SUPPORTED`, formal `NONE`, hardware `NONE`, deployment `LOCAL`. G9 adds no federation, distributed consensus, T4/T5 enablement, physical-control readiness, formal-runtime proof, hardware qualification, or semantic/scientific truth certification.
 
 ## Next admissible action
 
-Run the complete exact-head RC0 CI after evidence sealing; inspect the full PR diff; merge only the reviewed green head; then decide/create the `v1.0.0rc0` GitHub prerelease/tag and synchronize the canonical Drive handoff.
+Run fresh exact-head Python 3.12/3.13 CI and inherited RC0 regression gates; inspect the complete G9 diff adversarially for filesystem, idempotence, evidence-binding, authority-synthesis, and double-commit gaps. If review finds defects, fix and rerun. Mark PR #23 ready and merge only after the corrected exact head is green and the G9 claim boundary remains conservative.
 
 ## Continuation rule
 
-Every substantial implementation/release change should update this file if phase, maturity, blockers, or next action change. Public claims must remain consistent with `CLAIM_BOUNDARY.md`, `QIC_MANIFEST.json`, G8 qualification, and RC0 release evidence.
+Preserve RC0 as a frozen qualified baseline. Every substantial reliability change must maintain claim boundaries, T4/T5 disabled status, source↔packaged manifest parity where applicable, and evidence-before-merge discipline.

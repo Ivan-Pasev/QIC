@@ -12,7 +12,8 @@
     "G6": "MERGED",
     "G7": "MERGED",
     "G8": "MERGED",
-    "RC0": "ACTIVE"
+    "RC0": "MERGED",
+    "G9": "ACTIVE"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -36,16 +37,20 @@
   },
   "release": {
     "candidate": "1.0.0rc0",
-    "phase": "RC0_CONVERGENCE"
+    "phase": "RC0_QUALIFIED_PUBLICATION_PENDING"
   },
-  "claim_boundary": "QIC G0-G8 verification and qualification establish declared local structural properties only. RC0 packaging does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, deployment readiness, cryptographic identity, federation, distributed consensus, hardware qualification, or durable crash recovery.",
+  "active_engineering": {
+    "slice": "G9",
+    "scope": "local durable transaction journal and conservative crash-recovery classification"
+  },
+  "claim_boundary": "QIC G0-G8 verification and qualification establish declared local structural properties only. RC0 reproducible packaging and active G9 recovery engineering do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, deployment readiness, cryptographic identity, federation, distributed consensus, hardware qualification, or universal durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",
     "No physical-control claim",
     "No federation claim",
     "No distributed-consensus claim",
-    "No durable crash-recovery claim",
+    "No durable crash-recovery claim while G9 is active",
     "No universal-truth claim"
   ]
 }
