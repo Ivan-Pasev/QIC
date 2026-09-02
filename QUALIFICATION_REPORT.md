@@ -1,6 +1,6 @@
 # QIC G8 Qualification Report
 
-**Status:** qualification branch active; final CI evidence pending
+**Status:** qualification candidate PASS; final documentation-sealed head pending one last CI recheck before merge
 
 **Scope:** adversarial constitutional qualification over the implemented G0–G7 local genesis stack.
 
@@ -34,6 +34,40 @@ Five declared critical defect models must be killed:
 
 These are deterministic modeled defects, not a claim of exhaustive source-code mutation coverage. A mutant is killed only when the real runtime contains/rejects the adversarial case while the permissive modeled defect would accept it.
 
+## Qualification history
+
+### First G8 CI campaign — expected block
+
+PR #19 initial qualification head: `f524d5905d787e4f1ce59680c828596510351856`
+
+GitHub Actions run: `33656722959`
+
+Result on Python 3.12: **85 passed, 11 failed**. The failure was not a production constitutional bypass. The scalar-maturity modeled-mutant fixture was malformed: the synthetic scalar score still failed the requirement, so only 4/5 modeled mutants were killed. The older G7 CLI tests also correctly failed because their expected active/merged state had not yet been advanced to G8.
+
+Containment response:
+
+- no production maturity, authority, transition, Chrono, or KBI gate was weakened;
+- the scalar mutant fixture was corrected so semantic/evidence prestige can falsely compensate for missing hardware only in the modeled defective path;
+- legacy CLI tests were advanced to merged G7 / active G8 expectations;
+- the corrected qualification fixture is isolated in `qic/qualification_fixture_patch.py` and explicitly documented as a G8 harness correction.
+
+### Corrected G8 CI campaign — PASS
+
+Reviewed qualification head: `a1a27d378812b277c1e230d1beb5018e7469acba`
+
+GitHub Actions run: `33656980528`
+
+- Python 3.12: **96 passed**
+- Python 3.13: **full suite passed**
+- workflow conclusion: **success**
+- all nine qualification checks passed;
+- all five declared critical modeled mutants were killed;
+- T4/T5 remained `FAMILY_NOT_ENABLED` under matching A_P/A_X authority;
+- public maturity remained `formal=NONE`, `hardware=NONE`, `deployment=LOCAL`;
+- aggregate `qic --json verify` and targeted `qic --json verify qualification` passed.
+
+Because this report commit changes the PR head after the corrected runtime/test evidence was recorded, the documentation-sealed head must receive one final green CI run before merge. No further code change is admissible without restarting the exact-head qualification requirement.
+
 ## Failure atlas
 
 The normative failure/containment map is `docs/qualification/FAILURE_ATLAS.yaml`. It includes canonical ambiguity, maturity collapse, authority amplification, stale/unauthorized transitions, physical/evolutionary bypass, Chrono tamper/truncation, evidence echo, contradiction suppression, and public claim inflation.
@@ -42,27 +76,21 @@ The normative failure/containment map is `docs/qualification/FAILURE_ATLAS.yaml`
 
 An internally valid historical prefix may verify as a valid prefix. Completeness/recency cannot be inferred from that prefix alone. G8 therefore requires an independently retained expected length/head event/head witness anchor to detect valid-prefix suffix truncation. This is a retained limitation, not a defect hidden by the qualification result.
 
-## Current evidence state
+## Residual limitations
 
-The branch provides:
+G8 does not establish or implement:
 
-- `qic/qualification.py`
-- `tests/adversarial/test_qualification.py`
-- `qic verify qualification`
-- aggregate `qic verify` including G8
-- `docs/qualification/FAILURE_ATLAS.yaml`
-- ADR-0009
-- G8 manifest/traceability updates
+- formal-runtime verification;
+- cryptographic identity/nonrepudiation;
+- durable transaction journaling or crash recovery;
+- federation/distributed consensus;
+- hardware qualification;
+- physical actuation or physical safety qualification;
+- coverage-guided fuzzing or exhaustive source mutation analysis;
+- semantic/scientific/legal truth certification.
 
-Final PASS status, exact reviewed head, and Python 3.12/3.13 CI evidence are recorded only after the complete branch passes review and CI. Until then, G8 remains **ACTIVE**, not qualified or released.
+The five modeled mutants are targeted constitutional defect models, not exhaustive mutation coverage.
 
 ## RC0 gate
 
-`QIC-v1 RC0` is admissible only after:
-
-- all G8 checks pass on Python 3.12 and 3.13;
-- all five declared critical modeled mutants are killed;
-- no discovered constitutional defect remains uncorrected;
-- public claim/maturity surfaces remain conservative;
-- T4/T5 remain non-executable everywhere in the reference runtime;
-- the final reviewed branch head is merged.
+`QIC-v1 RC0` becomes admissible only after the documentation-sealed PR head also passes Python 3.12/3.13 CI and PR #19 is merged without further code changes.
