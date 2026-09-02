@@ -22,6 +22,7 @@ from .journal_store import (
     JournalConflictError,
     JournalCorruptionError,
     _fsync_directory,
+    _promote_no_replace,
 )
 from .recovery import (
     DurableArtifactView,
@@ -192,7 +193,15 @@ class RecoveryEvidenceStore:
                 handle.write(_encoded(bundle))
                 handle.flush()
                 os.fsync(handle.fileno())
-            os.replace(temporary, target)
+            try:
+                _promote_no_replace(temporary, target)
+            except FileExistsError:
+                durable = self.load(bundle.transaction_id, bundle.journal_sequence)
+                if durable == bundle:
+                    return target
+                raise JournalConflictError(
+                    "concurrent recovery evidence promotion created different content"
+                )
             _fsync_directory(directory)
         except BaseException:
             try:
