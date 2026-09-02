@@ -101,15 +101,23 @@ def test_delegation_requires_direct_lineage_and_subject_as_issuer() -> None:
     assert not parent.can_delegate(wrong_parent)
 
 
-def test_revoked_grant_fails_closed() -> None:
+def test_revoked_grant_fails_closed_for_requirements_and_delegation() -> None:
     parent = grant().revoked_copy()
     requirement = AuthorityRequirement(
         domains=frozenset({AuthorityDomain.COMPUTATIONAL}),
         capabilities=frozenset({"mission.plan"}),
         resources=frozenset({"state.derived"}),
     )
+    child = AuthorityGrant(
+        grant_id="child",
+        subject="worker",
+        issuer="hermes",
+        parent_grant_id=parent.grant_id,
+        domains=frozenset({AuthorityDomain.COMPUTATIONAL}),
+    )
     assert parent.state is GrantState.REVOKED
     assert not parent.satisfies(requirement)
+    assert not parent.can_delegate(child)
 
 
 def test_wildcards_and_invalid_tokens_are_rejected() -> None:
@@ -117,6 +125,26 @@ def test_wildcards_and_invalid_tokens_are_rejected() -> None:
         AuthorityRequirement(capabilities=frozenset({"*"}))
     with pytest.raises(ValueError):
         AuthorityRequirement(resources=frozenset({"State KBI"}))
+
+
+def test_domain_and_scope_types_fail_closed() -> None:
+    with pytest.raises(TypeError):
+        AuthorityRequirement(domains=frozenset({"A_C"}))  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        AuthorityRequirement(capabilities={"mission.plan"})  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        grant(domains=frozenset({"A_C"}))
+    with pytest.raises(TypeError):
+        grant(state="ACTIVE")
+
+
+def test_identity_and_parent_lineage_identifiers_fail_closed() -> None:
+    with pytest.raises(ValueError):
+        grant(grant_id="")
+    with pytest.raises(ValueError):
+        grant(subject="bad\x00subject")
+    with pytest.raises(ValueError):
+        grant(parent_grant_id="")
 
 
 def test_authority_registry_matches_runtime_domains() -> None:
