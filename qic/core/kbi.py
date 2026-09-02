@@ -565,7 +565,11 @@ class KBIExecutor:
             proposal_id=proposal_id,
             actor=actor,
             operation=operation,
-            expected_state_digest=expected_state_digest or context.runtime_state.digest,
+            expected_state_digest=(
+                context.runtime_state.digest
+                if expected_state_digest is None
+                else expected_state_digest
+            ),
             payload=payload,
         )
 
