@@ -126,7 +126,9 @@ slices:
       - tests/test_recovery_schema.py
     recovery_contract:
       - immutable hash-linked journal records
-      - fsync plus atomic-replace reference persistence
+      - fsync plus atomic no-replace hard-link reference persistence
+      - unique same-directory temp files so stale crash residue does not block retry
+      - concurrent conflicting promotion cannot overwrite an existing winner
       - exact journal-head-bound recovery evidence receipts
       - conservative mismatch and ahead-of-journal quarantine
       - no evidence synthesis
