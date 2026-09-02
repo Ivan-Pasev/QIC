@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from qic.core import canonical_text, digest_hex
+from qic.core import canonical_text
 from qic.core.authority import AuthorityDomain, AuthorityGrant, AuthorityRequirement, GrantState
 from qic.core.transition import (
     ENABLED_FAMILIES,
@@ -70,6 +70,14 @@ def increment_rule(current: StateSnapshot, requested: TransitionProposal) -> Sta
 
 def rejecting_rule(current: StateSnapshot, requested: TransitionProposal) -> StateSnapshot | None:
     return None
+
+
+def same_revision_rule(current: StateSnapshot, requested: TransitionProposal) -> StateSnapshot | None:
+    return StateSnapshot(revision=current.revision, entries=(("counter", "99"),))
+
+
+def skipped_revision_rule(current: StateSnapshot, requested: TransitionProposal) -> StateSnapshot | None:
+    return StateSnapshot(revision=current.revision + 2, entries=(("counter", "99"),))
 
 
 def counter_below_two(candidate: StateSnapshot) -> bool:
@@ -199,6 +207,17 @@ def test_rule_rejection_cannot_commit() -> None:
     assert_rejected_unchanged(result, current, TransitionFailure.RULE_REJECTED)
 
 
+@pytest.mark.parametrize("rule", [same_revision_rule, skipped_revision_rule])
+def test_rule_must_advance_revision_by_exactly_one(rule) -> None:
+    current = state()
+    result = build_engine(rule=rule).execute(
+        state=current,
+        proposal=proposal(current),
+        grant=grant(),
+    )
+    assert_rejected_unchanged(result, current, TransitionFailure.RULE_REJECTED)
+
+
 def test_scoped_invariant_failure_cannot_commit() -> None:
     current = state("1", revision=1)
     result = build_engine(invariant_ids=("counter.below-two",)).execute(
@@ -219,6 +238,39 @@ def test_global_invariant_failure_cannot_commit() -> None:
     )
     assert_rejected_unchanged(result, current, TransitionFailure.INVARIANT_FAILED)
     assert result.failed_invariant == "counter.below-two"
+
+
+def test_rejected_outcome_constructor_cannot_smuggle_changed_state() -> None:
+    before = state()
+    after = state("99", revision=1)
+    with pytest.raises(ValueError):
+        TransitionOutcome(
+            accepted=False,
+            failure=TransitionFailure.RULE_REJECTED,
+            proposal_digest="abc",
+            before_state=before,
+            after_state=after,
+        )
+
+
+def test_transition_outcome_rejects_malformed_types() -> None:
+    current = state()
+    with pytest.raises(TypeError):
+        TransitionOutcome(
+            accepted=True,
+            failure="RULE_REJECTED",  # type: ignore[arg-type]
+            proposal_digest="abc",
+            before_state=current,
+            after_state=current,
+        )
+    with pytest.raises(ValueError):
+        TransitionOutcome(
+            accepted=True,
+            failure=None,
+            proposal_digest="",
+            before_state=current,
+            after_state=current,
+        )
 
 
 def test_family_registry_matches_runtime_contract() -> None:
