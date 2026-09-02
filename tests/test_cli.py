@@ -12,16 +12,17 @@ from qic.core.transition import ENABLED_FAMILIES, TransitionFamily
 ROOT = Path(__file__).parents[1]
 
 
-def test_aggregate_verification_passes_declared_g0_g7_scope() -> None:
+def test_aggregate_verification_passes_declared_g0_g8_scope() -> None:
     payload = aggregate_verify()
     assert payload["pass"] is True
-    assert payload["scope"] == "G0-G7 structural verification"
-    assert [check["check"] for check in payload["checks"]] == [
+    assert payload["scope"] == "G0-G8 structural verification"
+    assert [check.get("check", check.get("scope")) for check in payload["checks"]] == [
         "canonical",
         "registries",
         "transition",
         "chrono",
         "kbi",
+        "G8 adversarial constitutional qualification over G0-G7",
     ]
     assert all(check["pass"] is True for check in payload["checks"])
     assert "does not certify" in payload["claim_boundary"]
@@ -38,10 +39,13 @@ def test_cli_json_verify_is_deterministic_and_successful(capsys) -> None:
 
 
 def test_cli_individual_verifiers_pass(capsys) -> None:
-    for target in ("canonical", "registries", "transition", "chrono", "kbi"):
+    for target in ("canonical", "registries", "transition", "chrono", "kbi", "qualification"):
         assert main(["--json", "verify", target]) == EXIT_PASS
         payload = json.loads(capsys.readouterr().out)
-        assert payload["check"] == target
+        if target == "qualification":
+            assert payload["scope"] == "G8 adversarial constitutional qualification over G0-G7"
+        else:
+            assert payload["check"] == target
         assert payload["pass"] is True
 
 
@@ -56,6 +60,7 @@ def test_installed_console_entrypoint_executes_aggregate_verification() -> None:
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     assert payload["pass"] is True
+    assert payload["scope"] == "G0-G8 structural verification"
 
 
 def test_python_module_cli_matches_console_contract() -> None:
@@ -68,8 +73,8 @@ def test_python_module_cli_matches_console_contract() -> None:
     )
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
-    assert payload["implemented_through"] == "G6"
-    assert payload["active_implementation"] == "G7"
+    assert payload["implemented_through"] == "G7"
+    assert payload["active_implementation"] == "G8"
     assert payload["transition_families_not_enabled"] == ["T4", "T5"]
 
 
@@ -87,7 +92,8 @@ def test_registry_and_constitution_commands_are_read_only_surfaces(capsys) -> No
 def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     manifest = json.loads((ROOT / "QIC_MANIFEST.json").read_text(encoding="utf-8"))
     assert manifest["implementation_sequence"]["G6"] == "MERGED"
-    assert manifest["implementation_sequence"]["G7"] == "ACTIVE"
+    assert manifest["implementation_sequence"]["G7"] == "MERGED"
+    assert manifest["implementation_sequence"]["G8"] == "ACTIVE"
     assert manifest["transition_profile"]["enabled"] == [
         family.value for family in sorted(ENABLED_FAMILIES, key=lambda item: item.value)
     ]
@@ -98,9 +104,11 @@ def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     ]
     assert manifest["maturity"]["formal"] == "NONE"
     assert manifest["maturity"]["hardware"] == "NONE"
+    assert manifest["maturity"]["deployment"] == "LOCAL"
+    assert manifest["qualification"]["release_blocking_on_survivor"] is True
     assert "No formal-runtime verification claim" in manifest["explicit_nonclaims"]
     assert "No hardware-tested claim" in manifest["explicit_nonclaims"]
-    assert "does not certify" in manifest["claim_boundary"]
+    assert "do not certify" in manifest["claim_boundary"]
 
 
 def test_cli_surface_contains_no_mutating_authority_command() -> None:
