@@ -36,16 +36,18 @@ Implemented on the G9 branch:
 - legal PREPARED → VALIDATED → STATE_COMMITTED → CHRONO_COMMITTED → WITNESS_COMMITTED → COMPLETE progression plus terminal ABORTED/QUARANTINED;
 - phase-specific state/outcome/Chrono/witness digest requirements;
 - explicit protection against transaction/sequence/phase/link rebinding;
-- `JournalFileStore` with temp-write → flush/fsync → atomic replace → directory fsync reference policy;
+- `JournalFileStore` with unique same-directory temp files, flush/fsync, atomic **no-replace hard-link promotion**, temp unlink, and directory fsync;
 - immutable persisted records with schema/digest/sequence/link/phase validation;
 - idempotent retry of identical durable records and conflict rejection for divergent duplicates;
 - deterministic journal failpoints before/after atomic promotion;
+- stale crash temp files ignored by journal loading and unable to block future append;
+- concurrent conflicting promotion cannot overwrite the existing durable winner;
 - startup scanning that contains corrupt transactions without hiding valid ones;
 - phase-specific nonexecuting `assess_recovery()` classification;
 - `DurableArtifactView` and conservative `reconcile_recovery()`;
 - mismatch/ahead-of-journal evidence quarantines instead of inferred forward progress;
 - immutable `RecoveryEvidenceBundle` bound to exact transaction, journal sequence, and journal-head digest;
-- `RecoveryEvidenceStore` with atomic immutable bundle persistence and exact-retry idempotence;
+- `RecoveryEvidenceStore` with the same no-replace immutable promotion policy and exact-retry idempotence;
 - restart-idempotent reconciliation and no-double-state-commit classification;
 - deterministic crash/restart campaign for state, Chrono, and witness boundaries;
 - recovery schema/runtime parity checks and ADR-0011;
@@ -55,12 +57,15 @@ Implemented on the G9 branch:
 
 1. `JournalRecord.successor(phase, **changes)` allowed Python argument binding to throw before QIC could explicitly reject forged `phase=` rebinding. The API parameter is now `next_phase`, so protected-field rebinding reaches the constitutional guard and fails with the intended QIC error.
 2. The initial durable-store append ordering rejected an exact retry of an already-durable terminal record before checking idempotence. Exact durable duplicates are now recognized first; conflicting duplicates remain fail-closed.
+3. Initial temp→target promotion used `os.replace`, which could overwrite a concurrent durable winner after a stale pre-check. Promotion now uses an atomic no-replace hard link and explicit same/different winner handling.
+4. A fixed temp filename could become stale after a real process death and block later writers. Both stores now use unique same-directory temp names; stale temp residue is ignored by canonical record loading.
+5. Concurrent identical-winner reconciliation initially could return idempotently while leaving the losing unique temp file. Both stores now remove that temp before returning.
 
 ## Current evidence state
 
 Head `e360330c923db97349722bb3b7cd8b3647135df7` passed CI run `33680622144` completely, including source tests on Python 3.12/3.13 and inherited RC0 artifact/reproducibility regression gates.
 
-Subsequent G9 commits add immutable recovery evidence bundles, restart/crash qualification, schema, ADR, traceability, and manifest/state synchronization. The exact final head must pass a fresh complete CI run before PR #23 can leave draft.
+Subsequent G9 commits add immutable recovery evidence bundles, restart/crash/race qualification, schema, ADR, traceability, manifest/state synchronization, and the no-replace/stale-temp corrections discovered during adversarial review. The exact final head must pass a fresh complete CI run before PR #23 can leave draft.
 
 ## Recovery law
 
@@ -68,11 +73,13 @@ Subsequent G9 commits add immutable recovery evidence bundles, restart/crash qua
 
 `STATE_COMMITTED + exact state/outcome evidence => next admissible boundary is CHRONO commit, never state commit again`
 
+`concurrent durable target exists => IDENTICAL = IDEMPOTENT; DIFFERENT = CONFLICT; NEVER OVERWRITE`
+
 Recovery classification is descriptive only. It does not mint authority, replay a transition, create KBI state, append Chrono, or synthesize a witness.
 
 ## Claim boundary
 
-The G9 reference implementation tests local durability/restart behavior under the declared Python/OS/filesystem semantics. It is not a universal filesystem/controller/VM/network-storage/power-loss proof. While G9 is active, QIC retains the public nonclaim of durable crash-recovery completion.
+The G9 reference implementation tests local durability/restart behavior under the declared Python/OS/filesystem semantics and a filesystem supporting the required same-filesystem hard-link operation. It is not a universal filesystem/controller/VM/network-storage/power-loss proof. While G9 is active, QIC retains the public nonclaim of durable crash-recovery completion.
 
 Public maturity remains semantic `TESTED`, evidence `SUPPORTED`, formal `NONE`, hardware `NONE`, deployment `LOCAL`. G9 adds no federation, distributed consensus, T4/T5 enablement, physical-control readiness, formal-runtime proof, hardware qualification, or semantic/scientific truth certification.
 
