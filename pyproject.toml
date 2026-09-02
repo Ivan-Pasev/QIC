@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qic-core"
-version = "0.0.1"
-description = "Genesis constitutional kernel for QIC"
+version = "1.0.0rc0"
+description = "Qualified local constitutional kernel for QIC"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [
@@ -14,19 +14,24 @@ authors = [
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",
-  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python :: 3.13",
+  "Development Status :: 3 - Alpha",
 ]
 
 [project.scripts]
-qic = "qic.cli:main"
+qic = "qic.release_cli:main"
 
 [project.optional-dependencies]
 dev = [
+  "build>=1.2",
   "pytest>=8.0",
 ]
 
 [tool.setuptools.packages.find]
 include = ["qic*"]
+
+[tool.setuptools.package-data]
+"qic.resources" = ["*.json", "*.md", "registry/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

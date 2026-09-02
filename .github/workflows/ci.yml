@@ -32,3 +32,124 @@ jobs:
 
       - name: Run genesis tests
         run: pytest
+
+  rc0-artifact:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    env:
+      SOURCE_DATE_EPOCH: "315532800"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build and normalize wheel/sdist
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --outdir dist
+          python scripts/normalize_sdist.py dist/*.tar.gz
+          mkdir -p release-evidence
+          sha256sum dist/* | sort > release-evidence/SHA256SUMS
+
+      - name: Inspect packaged release resources
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheel = next(Path('dist').glob('*.whl'))
+          required = {
+              'qic/resources/QIC_MANIFEST.json',
+              'qic/resources/CLAIM_BOUNDARY.md',
+              'qic/resources/registry/transitions.json',
+              'qic/resources/registry/root_ontology.json',
+              'qic/resources/registry/authority_domains.json',
+              'qic/resources/registry/kbi.json',
+          }
+          with ZipFile(wheel) as archive:
+              names = set(archive.namelist())
+          missing = sorted(required - names)
+          if missing:
+              raise SystemExit(f'missing packaged resources: {missing}')
+          print(f'wheel={wheel.name}; required_resources={len(required)}')
+          PY
+
+      - name: Install wheel in clean environment
+        run: |
+          python -m venv /tmp/qic-rc0-wheel
+          /tmp/qic-rc0-wheel/bin/python -m pip install --upgrade pip
+          /tmp/qic-rc0-wheel/bin/python -m pip install dist/*.whl
+
+      - name: Verify installed wheel outside checkout
+        run: |
+          cd /tmp
+          /tmp/qic-rc0-wheel/bin/qic --json version | tee "$GITHUB_WORKSPACE/release-evidence/version.json"
+          /tmp/qic-rc0-wheel/bin/qic --json verify | tee "$GITHUB_WORKSPACE/release-evidence/verify.json"
+          /tmp/qic-rc0-wheel/bin/qic --json verify qualification | tee "$GITHUB_WORKSPACE/release-evidence/qualification.json"
+          /tmp/qic-rc0-wheel/bin/python - <<'PY' | tee "$GITHUB_WORKSPACE/release-evidence/metadata-version.txt"
+          from importlib.metadata import version
+          import qic
+          assert qic.__version__ == version('qic-core') == '1.0.0rc0'
+          print(qic.__version__)
+          PY
+
+      - name: Install normalized sdist in second clean environment
+        run: |
+          python -m venv /tmp/qic-rc0-sdist
+          /tmp/qic-rc0-sdist/bin/python -m pip install --upgrade pip
+          /tmp/qic-rc0-sdist/bin/python -m pip install dist/*.tar.gz
+
+      - name: Verify installed normalized sdist outside checkout
+        run: |
+          cd /tmp
+          /tmp/qic-rc0-sdist/bin/qic --json verify | tee "$GITHUB_WORKSPACE/release-evidence/sdist-verify.json"
+          /tmp/qic-rc0-sdist/bin/qic --json verify qualification | tee "$GITHUB_WORKSPACE/release-evidence/sdist-qualification.json"
+
+      - name: Upload RC0 evidence artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: qic-rc0-py${{ matrix.python-version }}
+          path: |
+            dist/*
+            release-evidence/*
+          if-no-files-found: error
+
+  rc0-reproducibility:
+    needs: rc0-artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download independent RC0 builds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: qic-rc0-py*
+          path: artifacts
+
+      - name: Require identical artifacts and verification evidence
+        run: |
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/SHA256SUMS \
+            artifacts/qic-rc0-py3.13/release-evidence/SHA256SUMS
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/version.json \
+            artifacts/qic-rc0-py3.13/release-evidence/version.json
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/verify.json \
+            artifacts/qic-rc0-py3.13/release-evidence/verify.json
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/qualification.json \
+            artifacts/qic-rc0-py3.13/release-evidence/qualification.json
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/sdist-verify.json \
+            artifacts/qic-rc0-py3.13/release-evidence/sdist-verify.json
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/sdist-qualification.json \
+            artifacts/qic-rc0-py3.13/release-evidence/sdist-qualification.json

@@ -1,0 +1,11 @@
+{
+  "schema": "qic.registry.authority-domains.v1",
+  "version": "QIC-AUTHORITY/1.0",
+  "domains": [
+    {"name": "EPISTEMIC", "id": "A_E"},
+    {"name": "COMPUTATIONAL", "id": "A_C"},
+    {"name": "PHYSICAL", "id": "A_P"},
+    {"name": "EVOLUTION", "id": "A_X"}
+  ],
+  "claim_boundary": "Authority domains are explicit and nontransitive; presence of one domain never implies another."
+}

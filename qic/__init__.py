@@ -4,7 +4,7 @@ The package begins with the smallest constitutional kernel and expands only
 when implementation evidence supports higher-layer maturity claims.
 """
 
-__version__ = "0.0.1"
+__version__ = "1.0.0rc0"
 
 # G8 qualification discovered and corrected one malformed modeled-mutant fixture.
 # Importing this module applies that qualification-only correction consistently

@@ -63,7 +63,7 @@ def test_installed_console_entrypoint_executes_aggregate_verification() -> None:
     assert payload["scope"] == "G0-G8 structural verification"
 
 
-def test_python_module_cli_matches_console_contract() -> None:
+def test_python_module_cli_matches_historical_internal_contract() -> None:
     result = subprocess.run(
         [sys.executable, "-m", "qic.cli", "--json", "status"],
         cwd=ROOT,
@@ -75,6 +75,22 @@ def test_python_module_cli_matches_console_contract() -> None:
     payload = json.loads(result.stdout)
     assert payload["implemented_through"] == "G7"
     assert payload["active_implementation"] == "G8"
+    assert payload["transition_families_not_enabled"] == ["T4", "T5"]
+
+
+def test_release_console_status_reports_rc0() -> None:
+    result = subprocess.run(
+        ["qic", "--json", "status"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["implemented_through"] == "G8"
+    assert payload["active_implementation"] == "RC0"
+    assert payload["release_candidate"] == "1.0.0rc0"
     assert payload["transition_families_not_enabled"] == ["T4", "T5"]
 
 
@@ -93,7 +109,8 @@ def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     manifest = json.loads((ROOT / "QIC_MANIFEST.json").read_text(encoding="utf-8"))
     assert manifest["implementation_sequence"]["G6"] == "MERGED"
     assert manifest["implementation_sequence"]["G7"] == "MERGED"
-    assert manifest["implementation_sequence"]["G8"] == "ACTIVE"
+    assert manifest["implementation_sequence"]["G8"] == "MERGED"
+    assert manifest["implementation_sequence"]["RC0"] == "ACTIVE"
     assert manifest["transition_profile"]["enabled"] == [
         family.value for family in sorted(ENABLED_FAMILIES, key=lambda item: item.value)
     ]
@@ -108,7 +125,7 @@ def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     assert manifest["qualification"]["release_blocking_on_survivor"] is True
     assert "No formal-runtime verification claim" in manifest["explicit_nonclaims"]
     assert "No hardware-tested claim" in manifest["explicit_nonclaims"]
-    assert "do not certify" in manifest["claim_boundary"]
+    assert "does not certify" in manifest["claim_boundary"]
 
 
 def test_cli_surface_contains_no_mutating_authority_command() -> None:
