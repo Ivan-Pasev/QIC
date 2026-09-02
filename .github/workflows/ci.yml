@@ -32,3 +32,77 @@ jobs:
 
       - name: Run genesis tests
         run: pytest
+
+  rc0-artifact:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build wheel and sdist
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --outdir dist
+          mkdir -p release-evidence
+          sha256sum dist/* | sort > release-evidence/SHA256SUMS
+
+      - name: Inspect packaged release resources
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheel = next(Path('dist').glob('*.whl'))
+          required = {
+              'qic/resources/QIC_MANIFEST.json',
+              'qic/resources/CLAIM_BOUNDARY.md',
+              'qic/resources/registry/transitions.json',
+              'qic/resources/registry/root_ontology.json',
+              'qic/resources/registry/authority_domains.json',
+              'qic/resources/registry/kbi.json',
+          }
+          with ZipFile(wheel) as archive:
+              names = set(archive.namelist())
+          missing = sorted(required - names)
+          if missing:
+              raise SystemExit(f'missing packaged resources: {missing}')
+          print(f'wheel={wheel.name}; required_resources={len(required)}')
+          PY
+
+      - name: Install artifact in clean environment
+        run: |
+          python -m venv /tmp/qic-rc0
+          /tmp/qic-rc0/bin/python -m pip install --upgrade pip
+          /tmp/qic-rc0/bin/python -m pip install dist/*.whl
+
+      - name: Verify installed artifact outside checkout
+        run: |
+          cd /tmp
+          /tmp/qic-rc0/bin/qic --json version | tee "$GITHUB_WORKSPACE/release-evidence/version.json"
+          /tmp/qic-rc0/bin/qic --json verify | tee "$GITHUB_WORKSPACE/release-evidence/verify.json"
+          /tmp/qic-rc0/bin/qic --json verify qualification | tee "$GITHUB_WORKSPACE/release-evidence/qualification.json"
+          /tmp/qic-rc0/bin/python - <<'PY' | tee "$GITHUB_WORKSPACE/release-evidence/metadata-version.txt"
+          from importlib.metadata import version
+          import qic
+          assert qic.__version__ == version('qic-core') == '1.0.0rc0'
+          print(qic.__version__)
+          PY
+
+      - name: Upload RC0 evidence artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: qic-rc0-py${{ matrix.python-version }}
+          path: |
+            dist/*
+            release-evidence/*
+          if-no-files-found: error
