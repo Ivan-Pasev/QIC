@@ -34,7 +34,15 @@ KBI admission is a separate transition from generation, derivation, receipt, or 
 
 ## Formal-method boundary
 
-A proved theorem establishes a property of the declared formal model under its assumptions. It does not automatically prove implementation correctness outside the refinement scope, physical-device behavior, external service behavior, scientific truth of modeled assumptions, or safety in every deployment context.
+A proved theorem establishes a property of the declared formal model under its assumptions. It does not automatically prove:
+
+- implementation correctness outside the refinement scope;
+- physical-device behavior;
+- external service behavior;
+- scientific truth of modeled assumptions;
+- safety in every deployment context.
+
+Formal/runtime conformance claims must identify the modeled transition subset and assumptions.
 
 ## Cyber-physical boundary
 
@@ -43,10 +51,29 @@ A proved theorem establishes a property of the declared formal model under its a
 - Measurement != interpretation.
 - Software simulation evidence must never be labeled measured physical evidence.
 
+Reference cyber-physical work should remain low-consequence until separately engineered, qualified, and commissioned.
+
+## Adaptive/evolution boundary
+
+- Learning may update bounded models/parameters only under declared authority.
+- Learning cannot silently rewrite hard safety constraints.
+- A generated design cannot directly mutate an operational physical baseline.
+- Material hardware change requires engineering change, as-built capture, commissioning, and a successor baseline.
+
 ## Heterogeneous/quantum-compute boundary
 
 QIC is designed to support heterogeneous backends including future QPU research interfaces. This does not mean the current public repository contains a quantum computer, a quantum advantage demonstration, or validated quantum hardware.
 
+A QPU output, when such a backend exists, is a computational result requiring the same evidence/admission discipline as other backend results.
+
 ## Publication rule
 
-Every public release should identify what exists, what was tested, the environment and assumptions, available evidence, and what remains conceptual, simulated, or unverified. Ambiguity resolves toward the lower maturity claim.
+Every public release, benchmark, white paper, or demo should answer:
+
+1. What exactly exists?
+2. What was tested?
+3. Under which environment and assumptions?
+4. What evidence is available?
+5. What remains conceptual, simulated, or unverified?
+
+Ambiguity should resolve toward the lower maturity claim.
