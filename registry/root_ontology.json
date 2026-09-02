@@ -1,0 +1,14 @@
+{
+  "schema": "qic.registry.root-ontology.v1",
+  "version": "QIC-ONTOLOGY/1.0",
+  "classes": [
+    {"name": "STATE", "id": "qic:ontology:STATE"},
+    {"name": "ACTOR", "id": "qic:ontology:ACTOR"},
+    {"name": "OPERATION", "id": "qic:ontology:OPERATION"},
+    {"name": "CONSTRAINT", "id": "qic:ontology:CONSTRAINT"},
+    {"name": "EVIDENCE", "id": "qic:ontology:EVIDENCE"},
+    {"name": "RESOURCE", "id": "qic:ontology:RESOURCE"},
+    {"name": "WITNESS", "id": "qic:ontology:WITNESS"}
+  ],
+  "claim_boundary": "Ontology identity classifies objects; it does not grant truth, authority, safety, or execution rights."
+}

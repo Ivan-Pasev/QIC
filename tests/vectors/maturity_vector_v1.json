@@ -1,0 +1,13 @@
+{
+  "schema": "qic.test-vector.maturity-vector.v1",
+  "digest_domain": "qic.maturity-vector",
+  "vector": {
+    "semantic": "TESTED",
+    "evidence": "CORROBORATED",
+    "formal": "MODELED",
+    "hardware": "SIMULATED",
+    "deployment": "LOCAL"
+  },
+  "canonical": "{\"$canonical\":\"QIC-CANONICAL/1.0\",\"value\":{\"$type\":\"dataclass\",\"class\":\"qic.core.maturity_vector.MaturityVector\",\"fields\":{\"deployment\":{\"$type\":\"enum\",\"class\":\"qic.core.maturity_vector.DeploymentMaturity\",\"name\":\"LOCAL\",\"value\":{\"$type\":\"int\",\"value\":\"1\"}},\"evidence\":{\"$type\":\"enum\",\"class\":\"qic.core.maturity_vector.EvidenceMaturity\",\"name\":\"CORROBORATED\",\"value\":{\"$type\":\"int\",\"value\":\"3\"}},\"formal\":{\"$type\":\"enum\",\"class\":\"qic.core.maturity_vector.FormalMaturity\",\"name\":\"MODELED\",\"value\":{\"$type\":\"int\",\"value\":\"1\"}},\"hardware\":{\"$type\":\"enum\",\"class\":\"qic.core.maturity_vector.HardwareMaturity\",\"name\":\"SIMULATED\",\"value\":{\"$type\":\"int\",\"value\":\"1\"}},\"semantic\":{\"$type\":\"enum\",\"class\":\"qic.core.maturity_vector.SemanticMaturity\",\"name\":\"TESTED\",\"value\":{\"$type\":\"int\",\"value\":\"2\"}}}}}",
+  "sha256": "43fdbefa244ad5a1e226388555ad19a96747a882369b4f70d36b973f9751c3ca"
+}

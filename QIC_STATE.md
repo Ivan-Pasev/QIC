@@ -6,7 +6,7 @@ Last updated: 2026-09-02
 
 **Phase:** Implementation Convergence
 
-**Active slice:** `QIC-G1 — Canonical serializer + digest kernel`
+**Active slice:** `QIC-G2 — Root ontology + maturity vector`
 
 **Public repository:** `Ivan-Pasev/QIC`
 
@@ -15,51 +15,43 @@ Last updated: 2026-09-02
 ## Established
 
 - Dedicated public QIC repository and canonical Drive working tree exist.
-- Professional public documentation, claim boundary, governance, contribution, security, roadmap, and architecture surfaces exist.
-- `QIC-G0 — Repository + Constitutional Spine` is closed and merged to `main` as commit `27da6862fe61f8efc394b3ac2b22443370f85cbf`.
-- G0 CI passed on Python 3.12 and 3.13 after correcting the non-cumulative maturity semantics.
-- `qic.core` contains the immutable genesis constitutional snapshot and explicit non-cumulative maturity labels.
-- Machine-readable constitution, maturity schema, and transition-registry seeds exist.
+- `QIC-G0 — Repository + Constitutional Spine` is closed and merged to `main` as `27da6862fe61f8efc394b3ac2b22443370f85cbf`.
+- `QIC-G1 — Canonical serializer + digest kernel` is closed and merged to `main` as `27d46780fc39132fff314c5020e254c55161378f`.
+- G1 includes deterministic `QIC-CANONICAL/1.0`, domain-separated `QIC-DIGEST/1.0`, fixed golden vectors, cross-process repeatability coverage, and fail-closed unsupported types.
 - T4 Physical and T5 Evolutionary remain explicitly `NOT_ENABLED`.
-- G1 Issue exists as `#4` and branch `qic-g1/canonical-digest` is active.
-- G1 branch contains `QIC-CANONICAL/1.0`, domain-separated `QIC-DIGEST/1.0`, golden vectors, negative tests, and ADR-0002.
-- Architectural implementation sequence `I00` through `I11` remains documented in the canonical manuscript.
-- Distribution strategy exists for ChatGPT, Gemini, NotebookLM, GitHub public, local/CodexStation, and the Omega public-LLM container.
+- G2 Issue exists as `#6` and branch `qic-g2/ontology-maturity` is active.
 
-## G1 implementation boundary
+## G2 implementation boundary
 
 Implemented on the active branch:
 
-- deterministic typed canonical UTF-8 JSON representation;
-- stable mapping-key ordering;
-- deterministic set/frozenset ordering by normalized canonical bytes;
-- explicit distinctions for list/tuple, bool/int, strings/integers;
-- dataclass and enum typed representations;
-- explicit rejection of floats, unknown objects, and non-string mapping keys;
-- SHA-256 digesting with explicit QIC version/domain separation;
-- fixed golden vectors and repeatability tests.
+- seven stable root ontology classes: STATE, ACTOR, OPERATION, CONSTRAINT, EVIDENCE, RESOURCE, WITNESS;
+- stable `qic:ontology:<NAME>` identifiers;
+- independent semantic/evidence/formal/hardware/deployment maturity dimensions;
+- immutable `MaturityVector`;
+- component-wise `satisfies`, `shortfall`, and partial-order dominance helpers;
+- machine-readable root ontology registry and maturity-vector JSON Schema;
+- representative canonical/digest golden vector;
+- tests proving simulation, formality, hardware evidence, deployment, and independent replication do not silently imply each other;
+- ADR-0003 documenting vector maturity semantics.
 
-Not implemented by G1:
+## Claim boundary
 
-- authority/capability runtime (`QIC-G3`);
-- transition/invariant execution engine (`QIC-G4`);
-- Chrono/witness implementation (`QIC-G5`);
-- minimal KBI (`QIC-G6`);
-- federation, physical control, or formal verification.
+Ontology membership and maturity metadata classify structural/evidence state only. They do not grant truth, authority, provenance correctness, safety, physical validity, or execution rights.
 
-Canonical/digest identity demonstrates structural byte identity only and does not imply truth, authority, provenance correctness, safety, or execution success.
+G2 does not implement authority delegation, capability grants, transition execution, KBI admission, Chrono, federation, or physical effects.
 
-## Current G1 exit gate
+## Current G2 exit gate
 
-- open a G1 PR from `qic-g1/canonical-digest`;
+- open a G2 PR from `qic-g2/ontology-maturity`;
 - require CI on Python 3.12 and 3.13;
-- inspect the full diff for unstable serialization or accidental semantic/authority claims;
-- verify golden vectors remain byte- and digest-stable;
-- merge only after the corrected head is green.
+- review the diff for reintroduction of a global ordinal maturity ladder;
+- verify schema/runtime enum parity and golden-vector stability;
+- merge only after the reviewed head is green.
 
 ## Next admissible action
 
-Open and qualify the G1 PR. If green and review-clean, merge G1, close Issue #4, and instantiate `QIC-G2 — Root ontology + maturity vector`.
+Open and qualify the G2 PR. If review-clean and green, merge G2, close Issue #6, and instantiate `QIC-G3 — Authority + capability model`.
 
 ## Continuation rule
 

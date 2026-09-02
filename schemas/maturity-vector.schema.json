@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qic.invalid/schemas/maturity-vector.schema.json",
+  "title": "QIC Maturity Vector",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["semantic", "evidence", "formal", "hardware", "deployment"],
+  "properties": {
+    "semantic": {"enum": ["CONCEPTUAL", "IMPLEMENTED", "TESTED"]},
+    "evidence": {"enum": ["NONE", "ASSERTED", "SUPPORTED", "CORROBORATED", "INDEPENDENTLY_REPLICATED"]},
+    "formal": {"enum": ["NONE", "MODELED", "MACHINE_CHECKED"]},
+    "hardware": {"enum": ["NONE", "SIMULATED", "PROTOTYPE", "HARDWARE_TESTED"]},
+    "deployment": {"enum": ["NONE", "LOCAL", "PILOT", "DEPLOYED"]}
+  },
+  "description": "Independent maturity dimensions. No value in one property implies any value in another property."
+}
