@@ -10,6 +10,19 @@ from .canonical import (
 from .chrono import ChronoChain, ChronoEvent, ChronoEventType, WitnessRecord, WitnessSubject
 from .constitution import PRIME_LAWS, ConstitutionSnapshot
 from .digest import DIGEST_VERSION, DigestDomainError, digest_bytes, digest_hex
+from .kbi import (
+    ClaimRecord,
+    ClaimStatus,
+    ContradictionRecord,
+    EvidenceBinding,
+    EvidenceClass,
+    EvidenceRecord,
+    EvidenceRelation,
+    KBIContext,
+    KBIExecutionResult,
+    KBIExecutor,
+    KBIState,
+)
 from .maturity import Maturity
 from .maturity_vector import (
     DeploymentMaturity,
@@ -40,17 +53,28 @@ __all__ = [
     "ChronoChain",
     "ChronoEvent",
     "ChronoEventType",
+    "ClaimRecord",
+    "ClaimStatus",
+    "ContradictionRecord",
     "DIGEST_VERSION",
     "CanonicalizationError",
     "ConstitutionSnapshot",
     "DeploymentMaturity",
     "DigestDomainError",
     "ENABLED_FAMILIES",
+    "EvidenceBinding",
+    "EvidenceClass",
     "EvidenceMaturity",
+    "EvidenceRecord",
+    "EvidenceRelation",
     "FAMILY_AUTHORITY",
     "FormalMaturity",
     "GrantState",
     "HardwareMaturity",
+    "KBIContext",
+    "KBIExecutionResult",
+    "KBIExecutor",
+    "KBIState",
     "Maturity",
     "MaturityVector",
     "PRIME_LAWS",

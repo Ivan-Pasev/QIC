@@ -1,0 +1,12 @@
+{
+  "schema": "qic.registry.kbi.v1",
+  "version": "QIC-KBI/1.0",
+  "claim_statuses": ["ASSERTED", "SUPPORTED", "CORROBORATED", "VALIDATED", "CANONICAL", "CONTESTED", "CONTRADICTED", "SUPERSEDED", "QUARANTINED"],
+  "evidence_classes": ["OBSERVED", "DERIVED", "SIMULATED", "FORMALLY_PROVED", "ATTESTED", "REMOTE_OBSERVED"],
+  "evidence_relations": ["SUPPORTS", "CONTRADICTS"],
+  "reserved_evidence_classes": ["MEASURED"],
+  "operations": ["kbi.claim.assert", "kbi.evidence.add", "kbi.evidence.bind", "kbi.claim.promote", "kbi.claim.contradict"],
+  "authority_domain": "A_E",
+  "resource": "state.kbi",
+  "claim_boundary": "KBI status and evidence bindings are explicit epistemic metadata; they do not by themselves establish semantic truth."
+}

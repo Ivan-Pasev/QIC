@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qic.invalid/schemas/kbi.schema.json",
+  "title": "QIC Minimal KBI",
+  "$defs": {
+    "claim_status": {"enum": ["ASSERTED", "SUPPORTED", "CORROBORATED", "VALIDATED", "CANONICAL", "CONTESTED", "CONTRADICTED", "SUPERSEDED", "QUARANTINED"]},
+    "evidence_class": {"enum": ["OBSERVED", "DERIVED", "SIMULATED", "FORMALLY_PROVED", "ATTESTED", "REMOTE_OBSERVED"]},
+    "evidence_relation": {"enum": ["SUPPORTS", "CONTRADICTS"]},
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "statement", "origin_source_id", "status", "provenance_refs"],
+      "properties": {
+        "claim_id": {"type": "string", "minLength": 1},
+        "statement": {"type": "string", "minLength": 1},
+        "origin_source_id": {"type": "string", "minLength": 1},
+        "status": {"$ref": "#/$defs/claim_status"},
+        "provenance_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "evidence_class", "source_id", "artifact_digest", "provenance_refs"],
+      "properties": {
+        "evidence_id": {"type": "string", "minLength": 1},
+        "evidence_class": {"$ref": "#/$defs/evidence_class"},
+        "source_id": {"type": "string", "minLength": 1},
+        "artifact_digest": {"type": "string", "minLength": 1},
+        "provenance_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_id", "claim_id", "evidence_id", "relation"],
+      "properties": {
+        "binding_id": {"type": "string", "minLength": 1},
+        "claim_id": {"type": "string", "minLength": 1},
+        "evidence_id": {"type": "string", "minLength": 1},
+        "relation": {"$ref": "#/$defs/evidence_relation"}
+      }
+    },
+    "contradiction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contradiction_id", "target_claim_id", "counter_claim_id", "evidence_refs"],
+      "properties": {
+        "contradiction_id": {"type": "string", "minLength": 1},
+        "target_claim_id": {"type": "string", "minLength": 1},
+        "counter_claim_id": {"type": "string", "minLength": 1},
+        "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["claims", "evidence", "bindings", "contradictions"],
+  "properties": {
+    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "bindings": {"type": "array", "items": {"$ref": "#/$defs/binding"}},
+    "contradictions": {"type": "array", "items": {"$ref": "#/$defs/contradiction"}}
+  },
+  "description": "Local minimal KBI interchange shape. Status/evidence metadata does not itself establish semantic truth or authority."
+}
