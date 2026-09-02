@@ -1,0 +1,67 @@
+schema: qic.traceability.v1
+claim_boundary: >-
+  Traceability maps implemented artifacts to tests and ADRs. It does not certify
+  semantic truth, production security, formal correctness, physical safety,
+  legal compliance, or deployment readiness.
+slices:
+  G0:
+    title: Repository + Constitutional Spine
+    evidence:
+      - constitution/constitution.yaml
+      - registry/transitions.json
+      - docs/adr/0001-constitutional-kernel.md
+  G1:
+    title: Canonical Serializer + Digest Kernel
+    implementation:
+      - qic/core/canonical.py
+      - qic/core/digest.py
+    tests:
+      - tests/test_canonical.py
+    adr: docs/adr/0002-canonical-serialization-and-digests.md
+  G2:
+    title: Root Ontology + Maturity Vector
+    implementation:
+      - qic/core/ontology.py
+      - qic/core/maturity_vector.py
+    tests:
+      - tests/test_maturity_vector.py
+    adr: docs/adr/0003-root-ontology-and-maturity-vector.md
+  G3:
+    title: Authority + Capability Model
+    implementation:
+      - qic/core/authority.py
+    tests:
+      - tests/test_authority.py
+    adr: docs/adr/0004-scoped-authority-and-capability.md
+  G4:
+    title: Transition Engine + Invariant Gate
+    implementation:
+      - qic/core/transition.py
+    tests:
+      - tests/test_transition.py
+    adr: docs/adr/0005-transition-engine-and-invariant-gate.md
+  G5:
+    title: Chrono + Witness
+    implementation:
+      - qic/core/chrono.py
+    tests:
+      - tests/test_chrono.py
+      - tests/test_chrono_anchor.py
+    adr: docs/adr/0006-chrono-and-witness.md
+  G6:
+    title: Minimal KBI
+    implementation:
+      - qic/core/kbi.py
+    tests:
+      - tests/test_kbi.py
+      - tests/test_kbi_golden.py
+      - tests/test_kbi_freshness_input.py
+    adr: docs/adr/0007-minimal-kbi.md
+  G7:
+    title: Genesis CLI + Verification
+    implementation:
+      - qic/cli.py
+      - QIC_MANIFEST.json
+    tests:
+      - tests/test_cli.py
+    adr: docs/adr/0008-genesis-cli-verification.md
