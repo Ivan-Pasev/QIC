@@ -40,8 +40,6 @@ jobs:
       matrix:
         python-version: ["3.12", "3.13"]
     env:
-      # ZIP timestamps cannot precede 1980. A fixed epoch makes independently
-      # built pure-Python RC0 archives eligible for bit-reproducibility checks.
       SOURCE_DATE_EPOCH: "315532800"
 
     steps:
@@ -53,10 +51,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Build wheel and sdist
+      - name: Build and normalize wheel/sdist
         run: |
           python -m pip install --upgrade pip build
           python -m build --outdir dist
+          python scripts/normalize_sdist.py dist/*.tar.gz
           mkdir -p release-evidence
           sha256sum dist/* | sort > release-evidence/SHA256SUMS
 
@@ -83,24 +82,36 @@ jobs:
           print(f'wheel={wheel.name}; required_resources={len(required)}')
           PY
 
-      - name: Install artifact in clean environment
+      - name: Install wheel in clean environment
         run: |
-          python -m venv /tmp/qic-rc0
-          /tmp/qic-rc0/bin/python -m pip install --upgrade pip
-          /tmp/qic-rc0/bin/python -m pip install dist/*.whl
+          python -m venv /tmp/qic-rc0-wheel
+          /tmp/qic-rc0-wheel/bin/python -m pip install --upgrade pip
+          /tmp/qic-rc0-wheel/bin/python -m pip install dist/*.whl
 
-      - name: Verify installed artifact outside checkout
+      - name: Verify installed wheel outside checkout
         run: |
           cd /tmp
-          /tmp/qic-rc0/bin/qic --json version | tee "$GITHUB_WORKSPACE/release-evidence/version.json"
-          /tmp/qic-rc0/bin/qic --json verify | tee "$GITHUB_WORKSPACE/release-evidence/verify.json"
-          /tmp/qic-rc0/bin/qic --json verify qualification | tee "$GITHUB_WORKSPACE/release-evidence/qualification.json"
-          /tmp/qic-rc0/bin/python - <<'PY' | tee "$GITHUB_WORKSPACE/release-evidence/metadata-version.txt"
+          /tmp/qic-rc0-wheel/bin/qic --json version | tee "$GITHUB_WORKSPACE/release-evidence/version.json"
+          /tmp/qic-rc0-wheel/bin/qic --json verify | tee "$GITHUB_WORKSPACE/release-evidence/verify.json"
+          /tmp/qic-rc0-wheel/bin/qic --json verify qualification | tee "$GITHUB_WORKSPACE/release-evidence/qualification.json"
+          /tmp/qic-rc0-wheel/bin/python - <<'PY' | tee "$GITHUB_WORKSPACE/release-evidence/metadata-version.txt"
           from importlib.metadata import version
           import qic
           assert qic.__version__ == version('qic-core') == '1.0.0rc0'
           print(qic.__version__)
           PY
+
+      - name: Install normalized sdist in second clean environment
+        run: |
+          python -m venv /tmp/qic-rc0-sdist
+          /tmp/qic-rc0-sdist/bin/python -m pip install --upgrade pip
+          /tmp/qic-rc0-sdist/bin/python -m pip install dist/*.tar.gz
+
+      - name: Verify installed normalized sdist outside checkout
+        run: |
+          cd /tmp
+          /tmp/qic-rc0-sdist/bin/qic --json verify | tee "$GITHUB_WORKSPACE/release-evidence/sdist-verify.json"
+          /tmp/qic-rc0-sdist/bin/qic --json verify qualification | tee "$GITHUB_WORKSPACE/release-evidence/sdist-qualification.json"
 
       - name: Upload RC0 evidence artifacts
         uses: actions/upload-artifact@v4
@@ -122,7 +133,7 @@ jobs:
           pattern: qic-rc0-py*
           path: artifacts
 
-      - name: Require identical release artifact hashes
+      - name: Require identical artifacts and verification evidence
         run: |
           diff -u \
             artifacts/qic-rc0-py3.12/release-evidence/SHA256SUMS \
@@ -136,3 +147,9 @@ jobs:
           diff -u \
             artifacts/qic-rc0-py3.12/release-evidence/qualification.json \
             artifacts/qic-rc0-py3.13/release-evidence/qualification.json
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/sdist-verify.json \
+            artifacts/qic-rc0-py3.13/release-evidence/sdist-verify.json
+          diff -u \
+            artifacts/qic-rc0-py3.12/release-evidence/sdist-qualification.json \
+            artifacts/qic-rc0-py3.13/release-evidence/sdist-qualification.json
