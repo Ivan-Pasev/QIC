@@ -84,3 +84,28 @@ slices:
       - ignore_chrono_anchor
       - count_echo_bindings
     adr: docs/adr/0009-adversarial-constitutional-qualification.md
+  RC0:
+    title: Integrated Genesis Release Convergence
+    version: 1.0.0rc0
+    base_merge: b0c4f446dce21317cbd4cfc943633ee57507a8c8
+    release_engineering:
+      - pyproject.toml
+      - qic/release_cli.py
+      - qic/resources/
+      - RELEASE_NOTES_RC0.md
+      - .github/workflows/ci.yml
+    tests:
+      - tests/test_release_resources.py
+      - tests/test_cli.py
+    artifact_gate:
+      - wheel and sdist build
+      - required packaged-resource inspection
+      - clean wheel install outside repository checkout
+      - qic --json verify
+      - qic --json verify qualification
+      - package/metadata version equality
+      - SHA-256 artifact inventory
+    nonclaims:
+      - no new constitutional capability
+      - no T4/T5 enablement
+      - no formal or hardware maturity increase
