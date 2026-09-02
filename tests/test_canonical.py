@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum
 from pathlib import Path
 
 import pytest
@@ -16,6 +18,10 @@ from qic.core import (
 
 
 class ExampleEnum(Enum):
+    ALPHA = 1
+
+
+class ExampleIntEnum(IntEnum):
     ALPHA = 1
 
 
@@ -74,6 +80,12 @@ def test_dataclass_and_enum_have_declared_representation() -> None:
     assert '"$type":"enum"' in canonical_text(ExampleEnum.ALPHA)
 
 
+def test_int_enum_does_not_collapse_to_integer() -> None:
+    enum_text = canonical_text(ExampleIntEnum.ALPHA)
+    assert '"$type":"enum"' in enum_text
+    assert enum_text != canonical_text(1)
+
+
 def test_floats_fail_closed() -> None:
     with pytest.raises(CanonicalizationError):
         canonical_text(1.25)
@@ -116,3 +128,17 @@ def test_repeatability_within_process() -> None:
     digests = {digest_hex(value, domain="qic.repeatability") for _ in range(100)}
     assert len(outputs) == 1
     assert len(digests) == 1
+
+
+def test_repeatability_across_fresh_processes() -> None:
+    code = (
+        "from qic.core import canonical_text, digest_hex; "
+        "v={'name':'Ω-QIC','tags':{'formal','tested','implemented'}}; "
+        "print(canonical_text(v)); "
+        "print(digest_hex(v, domain='qic.cross-process'))"
+    )
+    runs = [
+        subprocess.check_output([sys.executable, "-c", code], text=True)
+        for _ in range(4)
+    ]
+    assert len(set(runs)) == 1
