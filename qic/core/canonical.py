@@ -100,24 +100,30 @@ def _json_string(value: str) -> bytes:
     ).encode("utf-8")
 
 
-def _append_plain_int_tuple(out: bytearray, value: tuple[int, ...]) -> None:
-    """Append the exact typed representation of a homogeneous plain-int tuple."""
+def _try_append_plain_int_tuple(out: bytearray, value: tuple[object, ...]) -> bool:
+    """Append a homogeneous plain-int tuple in one pass or roll back fully."""
 
+    start = len(out)
     out.extend(_INT_TUPLE_PREFIX)
     for index, item in enumerate(value):
+        if type(item) is not int:
+            del out[start:]
+            return False
         if index:
             out.append(44)
         out.extend(_INT_PREFIX)
         out.extend(str(item).encode("ascii"))
         out.extend(_INT_SUFFIX)
     out.extend(b']}')
+    return True
 
 
 def _encode_plain_int_tuple(value: tuple[int, ...]) -> bytes:
     """Emit a homogeneous plain-int tuple without per-leaf temporary byte objects."""
 
     out = bytearray()
-    _append_plain_int_tuple(out, value)
+    if not _try_append_plain_int_tuple(out, value):
+        raise TypeError("plain-int tuple encoder received a non-int element")
     return bytes(out)
 
 
@@ -125,7 +131,8 @@ def _canonical_plain_int_tuple(value: tuple[int, ...]) -> bytes:
     """Emit a top-level homogeneous plain-int tuple in one growing buffer."""
 
     out = bytearray(_CANONICAL_PREFIX)
-    _append_plain_int_tuple(out, value)
+    if not _try_append_plain_int_tuple(out, value):
+        raise TypeError("plain-int tuple encoder received a non-int element")
     out.append(125)
     return bytes(out)
 
@@ -172,8 +179,9 @@ def _encode_value(value: Any) -> bytes:
             b'}}',
         ))
     if isinstance(value, tuple):
-        if all(type(item) is int for item in value):
-            return _encode_plain_int_tuple(value)
+        int_tuple = bytearray()
+        if _try_append_plain_int_tuple(int_tuple, value):
+            return bytes(int_tuple)
         return b'{"$type":"tuple","items":[' + b','.join(_encode_value(item) for item in value) + b']}'
     if isinstance(value, list):
         return b'{"$type":"list","items":[' + b','.join(_encode_value(item) for item in value) + b']}'
@@ -198,8 +206,11 @@ def canonical_bytes(value: Any) -> bytes:
     declared types.
     """
 
-    if isinstance(value, tuple) and all(type(item) is int for item in value):
-        return _canonical_plain_int_tuple(value)
+    if isinstance(value, tuple):
+        out = bytearray(_CANONICAL_PREFIX)
+        if _try_append_plain_int_tuple(out, value):
+            out.append(125)
+            return bytes(out)
     return _CANONICAL_PREFIX + _encode_value(value) + b'}'
 
 
