@@ -6,13 +6,17 @@ Last updated: 2026-09-03
 
 **Active slice:** `QIC-G11 — Canonicalizer Algorithmic Optimization + Byte-Identity Preservation + Measured Regression Evidence`
 
-**Status:** ACTIVE / measured candidate sealed; final exact-head qualification pending
+**Status:** QUALIFIED / READY FOR MERGE
 
 **G11 issue:** #30
 
-**G11 PR:** #31 — DRAFT
+**G11 PR:** #31
 
 **Current branch:** `qic-g11/canonicalizer-optimization`
+
+**Final qualified head:** `aae57341567b1e4d393222deda5d35e32e06a1f0`
+
+**Final exact-head CI:** `33799262848` — PASS
 
 **Counterbalanced measurement run:** `33798799289` — PASS on measurement head `e3d0f2b612be1861dd66a87e345d35695466c595`
 
@@ -44,13 +48,13 @@ The production `canonical_bytes` path now emits the already-declared typed JSON 
 
 The frozen implementation remains available as `_canonical_bytes_reference` only for differential qualification.
 
-The candidate must preserve exact `QIC-CANONICAL/1.0` bytes. Any byte divergence is a release blocker regardless of performance.
+The candidate preserves exact `QIC-CANONICAL/1.0` bytes across the declared differential corpus. Any future byte divergence remains a release blocker regardless of performance.
 
 ## Byte-identity evidence
 
 Differential tests cover existing canonical semantics, Enum/IntEnum, dataclasses, mappings, lists/tuples, sets/frozensets, Unicode/escaping, bytes, unsupported/fail-closed cases, >200 deterministic generated nested values, and the measured tuple-of-1000 hot path.
 
-Current source tests are green on Python 3.12 and 3.13 for the measurement head.
+The final exact-head source suites passed on Python 3.12 and 3.13.
 
 ## Counterbalanced measured improvement
 
@@ -82,9 +86,21 @@ Same-job independently timed digest measurements estimate optimized canonical se
 
 This is a bounded decomposition estimate, not exact nested instrumentation. The absolute serialization cost is materially reduced, while the narrow residual workload remains serialization-dominant.
 
+## Final qualification
+
+Exact sealed head `aae57341567b1e4d393222deda5d35e32e06a1f0` passed run `33799262848` across:
+
+- Python 3.12 source tests;
+- Python 3.13 source tests;
+- G10 observatory regressions on both Python versions;
+- G11 counterbalanced comparison jobs on both Python versions;
+- RC0 wheel and normalized-sdist clean-install verification on both Python versions;
+- installed aggregate/qualification checks;
+- cross-Python release reproducibility.
+
 ## Engineering decision
 
-The algorithmic optimization is admissible on measured evidence if the final documentation/manifest-sealed head passes the complete inherited CI surface.
+The algorithmic optimization is admitted on measured evidence and exact-byte compatibility.
 
 No accelerator is selected by G11. Any future optimization or accelerator hypothesis must start from the optimized baseline and preserve canonical byte identity plus all constitutional/recovery/observability gates.
 
@@ -102,4 +118,4 @@ G11 is environment-specific software optimization evidence. It does not add fede
 
 ## Next admissible action
 
-Complete G11 traceability/ADR/manifest sealing, run full exact-head Python 3.12/3.13 + G10 + RC0/G9 regression CI, adversarially review the final diff, then merge PR #31 only if byte identity and measured non-regression remain green.
+Merge PR #31 only at exact head `aae57341567b1e4d393222deda5d35e32e06a1f0`, then perform post-merge truth sealing before opening the next evidence-selected optimization/research slice.
