@@ -38,6 +38,7 @@ def test_release_manifest_keeps_constitutional_nonclaims() -> None:
     assert manifest["implementation_sequence"]["G8"] == "MERGED"
     assert manifest["implementation_sequence"]["RC0"] == "MERGED"
     assert manifest["implementation_sequence"]["G9"] == "MERGED"
+    assert manifest["implementation_sequence"]["G10"] == "MERGED"
     assert manifest["release"]["phase"] == "RC0_QUALIFIED_PUBLICATION_PENDING"
     assert manifest["transition_profile"]["not_enabled"] == ["T4", "T5"]
     assert manifest["maturity"] == {
@@ -48,4 +49,6 @@ def test_release_manifest_keeps_constitutional_nonclaims() -> None:
         "deployment": "LOCAL",
     }
     assert "No universal durable crash-recovery guarantee" in manifest["explicit_nonclaims"]
-    assert manifest["last_completed_engineering"]["slice"] == "G9"
+    assert "No accelerator implementation or hardware recommendation claim" in manifest["explicit_nonclaims"]
+    assert manifest["last_completed_engineering"]["slice"] == "G10"
+    assert manifest["performance_observatory"]["status"] == "MERGED"

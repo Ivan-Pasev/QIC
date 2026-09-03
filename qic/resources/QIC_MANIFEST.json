@@ -14,7 +14,7 @@
     "G8": "MERGED",
     "RC0": "MERGED",
     "G9": "MERGED",
-    "G10": "ACTIVE"
+    "G10": "MERGED"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -38,9 +38,12 @@
   },
   "performance_observatory": {
     "slice": "G10",
-    "status": "ACTIVE",
+    "status": "MERGED",
     "measurement_run": "33719689186",
     "measured_head": "849c78fd4df5d5c0c0881ef7dfb2f5b20a75f61f",
+    "qualified_head": "d9e279cd494cd481dbbfeaec8ee4279dd1854276",
+    "qualified_run": "33720658546",
+    "merge_commit": "4d3d6896091c3b70355168d549ea172f1f92e0c7",
     "raw_artifacts": {
       "python_3_12": "9879769833",
       "python_3_13": "9879770182"
@@ -53,13 +56,13 @@
     "phase": "RC0_QUALIFIED_PUBLICATION_PENDING"
   },
   "last_completed_engineering": {
-    "slice": "G9",
-    "merge_commit": "8b297fea49d6dc76c0236fa9cca6bf8d9af7f249",
-    "qualified_head": "883f4bea90cc4c59f66e097f8415d39b90940658",
-    "ci_run": "33683360428",
-    "scope": "local durable transaction journal and conservative crash-recovery classification"
+    "slice": "G10",
+    "merge_commit": "4d3d6896091c3b70355168d549ea172f1f92e0c7",
+    "qualified_head": "d9e279cd494cd481dbbfeaec8ee4279dd1854276",
+    "ci_run": "33720658546",
+    "scope": "read-only performance observatory, live workload atlas, raw environment-bound campaign evidence, and narrow serialization bottleneck adjudication"
   },
-  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties only. Active G10 adds environment-specific software performance observations and one narrowly scoped serialization bottleneck finding; it does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
+  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. Merged G10 adds environment-specific software performance observations and one narrowly scoped serialization bottleneck finding. It does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",
