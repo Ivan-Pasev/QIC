@@ -1,116 +1,164 @@
-# QIC G12 — Residual Canonicalization Cost Characterization
+# QIC G12 — Residual Canonicalization Cost Characterization + Integer-Tuple Specialization
 
-Status: **ACTIVE / first characterization campaign qualified; optimization decision not yet closed**
+Status: **ACTIVE / closure candidate qualified; pending documentation-sealed exact-head CI and merge**
 
 Issue: #33  
 Draft PR: #34  
 Frozen baseline: G11 state-sealed `main` at `36ce69368ad4282c1d546211ade5cc4c8c3ca828`
 
-## Question
+## Mission
 
-After G11 removed the intermediate normalized object tree and improved the declared size-1000 canonicalization hot path by about 44%, what operation families plausibly dominate the remaining optimized cost?
+Characterize the residual G11 canonicalization cost before considering acceleration, then admit only a byte-identical software optimization directly supported by measured evidence.
 
-G12 does not infer a hardware target from timing share. It first characterizes the current software path.
+The governing laws remain:
 
-## Measurement correction discovered during G12
+- `NoAcceleratorWithoutMeasuredBottleneck`;
+- `MeasuredBottleneck != AutomaticSiliconCandidate`;
+- `AlgorithmicImprovementBeforeHardwareAcceleration`;
+- exact `QIC-CANONICAL/1.0` byte identity is release-blocking.
 
-The first G12 campaign revision enabled `tracemalloc` during timing. That changed the observed size-1000 `canonical_bytes` median into the multi-microsecond range and therefore made those timings unsuitable for comparison with G11.
+## Measurement correction
 
-The campaign was corrected before any bottleneck finding was admitted:
+The first G12 campaign revision enabled `tracemalloc` during timing and materially perturbed the serializer path. Those timings were rejected before any finding was admitted.
 
-- timing channel: `trace_memory=False`;
-- allocation channel: separate run with `trace_memory=True`;
-- result identity must match across timing and allocation channels;
-- proxy measurements remain explicitly non-attributive.
+The qualified campaign separates channels:
 
-The contaminated timing run is retained as a methodological negative result, not as performance evidence.
+- timing: `trace_memory=False`;
+- allocation: independent `trace_memory=True` run;
+- semantic result identity must match between channels;
+- proxy timings are never interpreted as exact nested attribution.
 
-## Qualified campaign
+The contaminated first timing run remains a methodological negative result.
 
-Workflow run: `33802554652`  
-Measured head: `7b9ef7b49421e448f3cd7b2cfafbcc951c16e933`
+## G12-F1 — residual-cost characterization
+
+Qualified corrected characterization: run `33802554652`, head `7b9ef7b49421e448f3cd7b2cfafbcc951c16e933`.
 
 Artifacts:
 
-- CPython 3.12 artifact `9911616821`, artifact digest `sha256:9d8f787450dc77e31bf6afd45e182ec6aae3c9a68487ff7d36df543bed7fb731`
-- CPython 3.13 artifact `9911621528`, artifact digest `sha256:195741564378485b2726b1f8375eec57b05ed0994ba2f7ca7b732c9c110c5870`
+- Python 3.12: `9911616821`, `sha256:9d8f787450dc77e31bf6afd45e182ec6aae3c9a68487ff7d36df543bed7fb731`;
+- Python 3.13: `9911621528`, `sha256:195741564378485b2726b1f8375eec57b05ed0994ba2f7ca7b732c9c110c5870`.
 
-Inherited full CI on the same head: run `33802554500` — PASS across Python 3.12/3.13 source tests, G10 observatory regressions, G11 comparison regressions, RC0 wheel/sdist clean-install verification, installed qualification, and cross-Python reproducibility.
+At size 1000 before the G12 production specialization:
 
-## Exact production-path observations
+| measurement | Python 3.12 | Python 3.13 |
+|---|---:|---:|
+| production `canonical_bytes` | 554,250 ns | 560,508 ns |
+| `digest_hex` end path | 574,107 ns | 583,800 ns |
+| production traced peak allocation | 180,884 B | 180,884 B |
+| integer-leaf batch proxy | 536,061 ns | 481,356 ns |
+| integer text proxy | 133,895 ns | 135,300 ns |
+| pre-encoded comma join proxy | 11,881 ns | 12,768 ns |
 
-Median wall time, nanoseconds:
+Finding: the declared integer-tuple workload is far more consistent with repeated per-element integer emission/dispatch and temporary-byte allocation than with the final comma join alone.
 
-| size | CPython 3.12 `canonical_bytes` | CPython 3.12 `digest_hex` | CPython 3.13 `canonical_bytes` | CPython 3.13 `digest_hex` |
-|---:|---:|---:|---:|---:|
-| 10 | 17,823 | 9,487 | 7,531 | 9,164 |
-| 100 | 56,615 | 60,583 | 61,321 | 62,863 |
-| 1000 | 554,250 | 574,107 | 560,508 | 583,800 |
+Evidence class: **SUPPORTED HYPOTHESIS**, because independent proxies are not nested stage attribution.
 
-The size-10 point is overhead-sensitive and is not used for bottleneck attribution. At sizes 100 and 1000, the production path scales approximately with item count for this integer-tuple family.
+## G12-F2 — byte-identical software reference candidates
 
-## Separate allocation channel
+Run `33802909806`, head `b06cab566230a74b93a08854c5bca0dc3a256f96` tested two software-only reference candidates. Both were byte-identical to production for declared sizes 10/100/1000.
 
-Median traced peak bytes for `canonical_bytes`:
+At size 1000:
 
-| size | traced peak bytes |
-|---:|---:|
-| 10 | 1,312 |
-| 100 | 18,148 |
-| 1000 | 180,884 |
+| candidate | Py3.12 improvement | Py3.13 improvement | traced peak allocation |
+|---|---:|---:|---:|
+| growing `bytearray` emitter | 43.23% | 40.91% | 60,636 B |
+| flattened parts + final join | 45.43% | 44.09% | 418,707 B |
 
-The traced allocation result is identical in the two measured Python environments for these payloads. This is a `tracemalloc` observation for the declared run, not a complete allocator/RSS model.
+The parts-join experiment was not selected despite slightly lower latency because its measured peak allocation exceeded the balanced bytearray candidate by more than 6×.
 
-## Proxy signals — not nested time shares
+Decision: select the growing-buffer design for a guarded production experiment; select no native or hardware accelerator.
 
-For the size-1000 integer tuple:
+## Production specialization
 
-| operation proxy | CPython 3.12 median | CPython 3.13 median | interpretation |
-|---|---:|---:|---|
-| independent integer-leaf `_encode_value` batch | 536,061 ns | 481,356 ns | strong per-element emission/dispatch signal |
-| decimal `str(int).encode('ascii')` batch | 133,895 ns | 135,300 ns | integer text conversion is material but not the whole leaf path |
-| comma join of pre-encoded leaves | 11,881 ns | 12,768 ns | join itself is small relative to the full tuple path in this proxy |
-| JSON-string batch over decimal text | 1,196,412 ns | 1,246,671 ns | not representative of plain-int fast path; retained as another payload operation family |
-| mapping encode, reversed input order | 2,030,060 ns | 2,053,704 ns | mapping sorting/key emission is a distinct, more expensive family |
-| set encode/order | 580,154 ns | 527,030 ns | set ordering adds a separate family cost; not the tuple bottleneck |
+G12 adds a narrow specialization for homogeneous tuples satisfying `type(item) is int`.
 
-The integer-leaf proxy is numerically close to full tuple canonicalization at size 1000, but **this ratio is not interpreted as an exact percentage time share**. The proxy creates a tuple of independently encoded leaf byte strings and therefore has a different allocation/composition pattern from recursive tuple emission.
+The specialization:
 
-## G12-F1 — first bounded finding
+- emits the canonical envelope and tuple representation into one growing `bytearray`;
+- validates plain-int membership during the same emission pass;
+- rolls back and uses the generic G11 path if a non-plain-int element is encountered;
+- therefore excludes `bool`, `IntEnum`, mixed tuples, and other subtype cases from the fast path;
+- keeps every other declared canonical type on the G11 generic emitter;
+- preserves the frozen G1 reference as the differential byte oracle.
 
-**Finding:** for the declared tuple-of-integers workload, the remaining cost is much more consistent with repeated per-element integer encoding / recursive dispatch / emitted-byte allocation than with the final comma-join operation alone.
+No canonical format changed.
 
-Evidence strength: **SUPPORTED HYPOTHESIS**, not causal closure.
+## Final production characterization
 
-Why this is admissible:
+Current closure-candidate head: `e1bacf31afa3fc76107d394da2aa95c41fee7d53`.
 
-1. the production path and integer-leaf proxy scale together at sizes 100 and 1000;
-2. pre-encoded joining remains only about 12 microseconds at size 1000 in both environments;
-3. integer decimal text conversion is itself about 134–135 microseconds at size 1000;
-4. traced peak allocation grows from 18,148 bytes at size 100 to 180,884 bytes at size 1000;
-5. the direction appears in both Python environments.
+G12 profile run `33803524078` — PASS on Python 3.12 and 3.13.
 
-Why it is not yet causal closure:
+Artifacts:
 
-- independent proxy workloads are not nested instrumentation;
-- ratios between proxy and production timings cannot be treated as exact stage shares;
-- `tracemalloc` peak bytes are not allocation-count or lifetime attribution;
-- no allocator/native profiler evidence has yet identified exact call-site contribution.
+- Python 3.12: `9911983142`, `sha256:fe5d2a5601fee1860b711fcd9fa1cafe87d809704d4d30a70fa35cfdc35bfb07`;
+- Python 3.13: `9911984318`, `sha256:6a7e35902d6aeff397545f6adb46be554d0776bb1bbb19017432a0917a835124`.
 
-## Next admissible experiment
+Size-1000 production result:
 
-Before changing production code, G12 should test a **buffer-oriented integer-tuple reference candidate** against the current G11 production path under exact byte identity.
+| environment | production median | traced peak allocation | bytearray reference median |
+|---|---:|---:|---:|
+| Python 3.12 | 319,507 ns | 60,608 B | 320,538 ns |
+| Python 3.13 | 268,463 ns | 60,608 B | 259,759 ns |
 
-The candidate should target the measured hypothesis directly:
+The production and balanced reference candidate are within approximately ±3.3%. Further micro-polishing of this design is not justified from these runner-bound measurements.
 
-- reduce per-leaf temporary byte-object construction and recursive dispatch for the homogeneous plain-int tuple case;
-- preserve the generic G11 path for all other declared canonical types;
-- remain a software algorithmic candidate only;
-- be rejected on any canonical-byte divergence;
-- be admitted only on same-environment measured evidence.
+The faster flattened-parts reference remains rejected as the production choice because its size-1000 traced peak allocation is approximately `418,707 B`.
 
-This is not permission for a C extension, Rust, SIMD, GPU, FPGA, ASIC, or QPU implementation. Those remain unselected.
+## Final frozen-G1 differential qualification
+
+Inherited counterbalanced comparison on the same closure-candidate head ran under full CI `33803524089`.
+
+Artifacts:
+
+- Python 3.12 G11/G1 comparison artifact `9911991159`, digest `sha256:5b5696f53725ae457e97e47ea7b0224f009a74e03872cc430a726a7a928dd4d1`;
+- Python 3.13 G11/G1 comparison artifact `9911995303`, digest `sha256:7033a0bcfd516f7df0e2806629bf32af748c7269cdd43e2a6adeaddb3b8f363b`.
+
+At size 1000:
+
+| environment | frozen G1 median | current G12 median | improvement | digest median | serialization-share estimate |
+|---|---:|---:|---:|---:|---:|
+| Python 3.12 | 921,496 ns | 312,493 ns | **66.09%** | 336,468 ns | 928,745 ppm / 92.87% |
+| Python 3.13 | 893,526.5 ns | 328,540.5 ns | **63.23%** | 325,571 ns | not emitted |
+
+Exact bytes matched the frozen reference in every measured pair.
+
+For Python 3.13 the independently timed digest median was slightly below the independently timed serializer median, so the campaign correctly emitted no serialization-share estimate rather than manufacturing a negative/nonphysical remainder. This is an evidence-quality feature, not missing data to be filled by inference.
+
+## Full inherited qualification
+
+Exact head `e1bacf31afa3fc76107d394da2aa95c41fee7d53` passed full CI run `33803524089` across:
+
+- source tests on Python 3.12 and 3.13;
+- exact canonical differential/golden tests;
+- G10 observatory regressions on both Python versions;
+- G11 counterbalanced frozen-reference comparisons on both Python versions;
+- RC0 wheel and normalized-sdist clean-install verification on both Python versions;
+- installed aggregate/qualification checks;
+- cross-Python release reproducibility.
+
+## Engineering decision
+
+G12 selects the **one-pass growing-buffer homogeneous plain-int tuple specialization** as the closure candidate.
+
+G12 rejects:
+
+- treating proxy ratios as nested attribution;
+- timings contaminated by `tracemalloc`;
+- the parts-join candidate as the balanced production choice because of its allocation cost;
+- any C/Rust/SIMD/GPU/FPGA/ASIC/QPU implementation at this stage.
+
+The residual serializer remains substantial for the declared workload, but the next action must again be evidence-selected. A remaining timing share by itself is not sufficient to justify hardware.
 
 ## Claim boundary
 
-G12 currently adds characterization evidence only. Public maturity remains semantic `TESTED`, evidence `SUPPORTED`, formal `NONE`, hardware `NONE`, deployment `LOCAL`. T4 and T5 remain `NOT_ENABLED`.
+G12 is a byte-identical software specialization plus environment-specific measurement evidence. Public maturity remains:
+
+- semantic: `TESTED`;
+- evidence: `SUPPORTED`;
+- formal: `NONE`;
+- hardware: `NONE`;
+- deployment: `LOCAL`.
+
+T4 Physical and T5 Evolutionary remain `NOT_ENABLED`. G12 adds no federation, physical-control readiness, formal proof, production-security certification, accelerator readiness, hardware qualification, or semantic/scientific truth certification.
