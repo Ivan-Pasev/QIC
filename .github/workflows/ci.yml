@@ -80,6 +80,54 @@ jobs:
           path: performance-evidence/*
           if-no-files-found: error
 
+  g11-canonical-comparison:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install QIC
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Run paired G11 reference-candidate campaigns
+        run: |
+          python scripts/run_g11_comparison.py \
+            --output g11-performance-evidence \
+            --warmups 3 \
+            --repetitions 15
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('g11-performance-evidence/manifest.json').read_text())
+          assert manifest['format'] == 'QIC-G11-CANONICAL-COMPARISON-MANIFEST/1.0'
+          assert len(manifest['records']) == 3
+          assert all(record['byte_identity'] is True for record in manifest['records'])
+          assert all(record['reference']['sample_count'] == 15 for record in manifest['records'])
+          assert all(record['candidate']['sample_count'] == 15 for record in manifest['records'])
+          assert all(record['reference']['result_digest'] == record['candidate']['result_digest'] for record in manifest['records'])
+          print(f"environment={manifest['environment']['digest']}; pairs={len(manifest['records'])}")
+          PY
+
+      - name: Upload G11 comparison evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qic-g11-canonical-comparison-py${{ matrix.python-version }}
+          path: g11-performance-evidence/*
+          if-no-files-found: error
+
   rc0-artifact:
     needs: test
     runs-on: ubuntu-latest
