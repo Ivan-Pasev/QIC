@@ -186,3 +186,37 @@ slices:
       - no T4/T5 enablement
       - no federation
       - no formal or hardware maturity increase
+  G11:
+    title: Canonicalizer Algorithmic Optimization + Byte-Identity Preservation
+    implementation:
+      - qic/core/canonical.py
+      - scripts/run_g11_compare.py
+      - scripts/run_g11_comparison.py
+      - .github/workflows/ci.yml
+    tests:
+      - tests/test_canonical_optimization.py
+      - inherited G1/G8/G9/G10/RC0 suites
+    evidence:
+      - PERFORMANCE_OPTIMIZATION_G11.md
+      - GitHub Actions run 33798799289
+      - artifact 9910239274 / Python 3.12 counterbalanced comparison evidence
+      - artifact 9910240220 / Python 3.13 counterbalanced comparison evidence
+    byte_identity_contract:
+      - production canonical bytes must equal the frozen G1 reference
+      - any divergence rejects the candidate regardless of speed
+      - fail-closed unsupported-value behavior remains equivalent
+    measured_result:
+      - size-1000 Python 3.12 median improvement 44.2355 percent
+      - size-1000 Python 3.13 median improvement 44.6151 percent
+      - residual same-job serialization share estimate about 95 percent in both environments
+    decision:
+      - admit algorithmic optimization only after final exact-head qualification
+      - no accelerator selected by G11
+    adr: docs/adr/0013-canonicalizer-algorithmic-optimization.md
+    nonclaims:
+      - no algorithmic complexity proof
+      - no portable performance guarantee
+      - no accelerator implementation or hardware recommendation
+      - no T4/T5 enablement
+      - no federation
+      - no maturity increase
