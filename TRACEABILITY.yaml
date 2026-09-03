@@ -220,3 +220,54 @@ slices:
       - no T4/T5 enablement
       - no federation
       - no maturity increase
+  G12:
+    title: Residual Canonicalization Characterization + Plain-Integer Tuple Specialization
+    status: ACTIVE
+    implementation:
+      - qic/core/canonical.py
+      - scripts/run_g12_residual_profile.py
+      - .github/workflows/g12.yml
+      - QIC_MANIFEST.json
+      - qic/resources/QIC_MANIFEST.json
+    tests:
+      - tests/test_canonical_optimization.py
+      - inherited G1/G8/G9/G10/G11/RC0 suites
+    evidence:
+      - PERFORMANCE_CHARACTERIZATION_G12.md
+      - GitHub Actions G12 run 33803524078
+      - artifact 9911983142 / Python 3.12 final residual profile
+      - artifact 9911984318 / Python 3.13 final residual profile
+      - GitHub Actions inherited CI run 33803524089
+      - artifact 9911991159 / Python 3.12 frozen-G1 comparison
+      - artifact 9911995303 / Python 3.13 frozen-G1 comparison
+    measurement_contract:
+      - timing and allocation are measured in separate channels
+      - tracemalloc-contaminated timing evidence is rejected
+      - proxy microkernels are non-attributive and not nested stage shares
+      - reference candidates must be exact-byte identical before timing interpretation
+      - no accelerator from timing share alone
+    specialization_contract:
+      - fast path applies only when every tuple element has exact type int
+      - bool and IntEnum do not enter the specialization
+      - one-pass buffer attempt rolls back before generic fallback
+      - all nonmatching canonical values preserve the generic G11 path
+      - frozen G1 remains the differential byte oracle
+    measured_result:
+      - size-1000 current-vs-frozen-G1 Python 3.12 median improvement 66.09 percent
+      - size-1000 current-vs-frozen-G1 Python 3.13 median improvement 63.23 percent
+      - size-1000 traced peak allocation reduced from about 180884 bytes to 60608 bytes
+      - Python 3.12 bounded residual serialization-share estimate 92.87 percent
+      - Python 3.13 serialization-share estimate withheld because independent digest median was below serializer median
+    decision:
+      - select one-pass growing-buffer homogeneous plain-int tuple specialization as G12 closure candidate
+      - reject flattened-parts candidate as balanced production choice because of about 418707-byte peak allocation
+      - no native or hardware accelerator selected
+    adr: docs/adr/0014-residual-canonicalization-and-int-tuple-specialization.md
+    nonclaims:
+      - no algorithmic optimality proof
+      - no portable performance guarantee
+      - no exact nested proxy attribution
+      - no accelerator implementation or hardware recommendation
+      - no T4/T5 enablement
+      - no federation
+      - no maturity increase
