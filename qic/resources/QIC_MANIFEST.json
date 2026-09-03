@@ -14,7 +14,8 @@
     "G8": "MERGED",
     "RC0": "MERGED",
     "G9": "MERGED",
-    "G10": "MERGED"
+    "G10": "MERGED",
+    "G11": "ACTIVE"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -51,6 +52,27 @@
     "first_finding": "G10-BF-001 SERIALIZATION_BOUND for current size-1000 Python canonical.digest path only",
     "decision": "algorithmic canonicalizer optimization before any hardware accelerator hypothesis"
   },
+  "algorithmic_optimization": {
+    "slice": "G11",
+    "status": "ACTIVE",
+    "candidate": "direct typed-JSON byte emission preserving QIC-CANONICAL/1.0",
+    "measurement_run": "33798799289",
+    "measured_head": "e3d0f2b612be1861dd66a87e345d35695466c595",
+    "raw_artifacts": {
+      "python_3_12": "9910239274",
+      "python_3_13": "9910240220"
+    },
+    "size_1000_improvement": {
+      "python_3_12_fraction": 0.44235474742407155,
+      "python_3_13_fraction": 0.4461512086213463
+    },
+    "size_1000_residual_serialization_share_ppm": {
+      "python_3_12": 950296,
+      "python_3_13": 947894
+    },
+    "byte_identity": "required and observed across the declared differential corpus",
+    "decision": "admit measured software optimization if final exact-head qualification remains green; no accelerator selected"
+  },
   "release": {
     "candidate": "1.0.0rc0",
     "phase": "RC0_QUALIFIED_PUBLICATION_PENDING"
@@ -62,7 +84,7 @@
     "ci_run": "33720658546",
     "scope": "read-only performance observatory, live workload atlas, raw environment-bound campaign evidence, and narrow serialization bottleneck adjudication"
   },
-  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. Merged G10 adds environment-specific software performance observations and one narrowly scoped serialization bottleneck finding. It does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
+  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. Merged G10 adds environment-specific software performance observations and one narrowly scoped serialization bottleneck finding. Active G11 adds a byte-identical measured software optimization candidate only; it does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",
