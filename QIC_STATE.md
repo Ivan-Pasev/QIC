@@ -4,23 +4,23 @@ Last updated: 2026-09-03
 
 ## Canonical status
 
-**Completed slice:** `QIC-G11 — Canonicalizer Algorithmic Optimization + Byte-Identity Preservation + Measured Regression Evidence`
+**Active slice:** `QIC-G12 — Residual Canonicalization Cost Characterization + Integer-Tuple Specialization`
 
-**Status:** MERGED / post-merge state seal in qualification
+**Status:** ACTIVE / closure candidate qualified / documentation seal in progress
 
-**G11 issue:** #30
+**G12 issue:** #33
 
-**G11 PR:** #31 — MERGED
+**G12 PR:** #34 — DRAFT
 
-**G11 merge commit:** `554e8f0ea6c2a5a187a5cb675a9d25e8fd8da70b`
+**Branch:** `qic-g12/residual-canonicalization`
 
-**Final qualified head:** `17975bcd1659c216404a7d8f5319877dc155ed19`
+**Frozen baseline:** G11 state-sealed `main` at `36ce69368ad4282c1d546211ade5cc4c8c3ca828`
 
-**Final exact-head CI:** `33799603266` — PASS
+**Current measured closure-candidate implementation head:** `e1bacf31afa3fc76107d394da2aa95c41fee7d53`
 
-**Counterbalanced measurement run:** `33798799289` — PASS on measurement head `e3d0f2b612be1861dd66a87e345d35695466c595`
+**G12 profile run:** `33803524078` — PASS
 
-**Post-merge seal branch:** `qic-g11/post-merge-state-seal`
+**Inherited full CI on implementation head:** `33803524089` — PASS
 
 **Release candidate baseline:** `1.0.0rc0`
 
@@ -28,88 +28,14 @@ Last updated: 2026-09-03
 
 **Canonical continuity root:** Google Drive `QIC_CANONICAL_WORKING_TREE`
 
-## Frozen qualified baseline
+## Frozen completed baseline
 
-- G0–G8 merged constitutional implementation/qualification stack.
-- RC0 integrated release convergence merged; actual GitHub `v1.0.0rc0` tag/release remains publication-pending until directly verified.
-- G9 durable journal/recovery merged and post-merge sealed.
-- G10 performance observatory merged and post-merge sealed.
-- G11 canonicalizer algorithmic optimization merged; post-merge truth seal is the current metadata-only action.
+- G0–G8: merged constitutional implementation/qualification stack.
+- RC0: integrated release convergence merged; GitHub tag/release publication remains separately publication-pending until directly verified.
+- G9: durable journal/recovery merged and post-merge sealed.
+- G10: performance observatory merged and post-merge sealed.
+- G11: direct canonical byte emitter merged and post-merge sealed.
 - T4 Physical and T5 Evolutionary remain `NOT_ENABLED`.
-
-## G10 evidence-selected problem
-
-`G10-BF-001 = SERIALIZATION_BOUND`
-
-Scope: the current CPython `canonical.digest` path for a tuple of 1000 integers in two measured GitHub-hosted Linux environments only.
-
-G10 decision: `AlgorithmicImprovementBeforeHardwareAcceleration`.
-
-## G11 implementation
-
-The production `canonical_bytes` path emits the already-declared typed JSON representation directly, avoiding the intermediate normalized Python object tree used by the frozen G1 implementation.
-
-The frozen implementation remains available as `_canonical_bytes_reference` only for differential qualification.
-
-Exact `QIC-CANONICAL/1.0` bytes remain the compatibility gate. Any future byte divergence is a release blocker regardless of performance.
-
-## Byte-identity evidence
-
-Differential tests cover existing canonical semantics, Enum/IntEnum, dataclasses, mappings, lists/tuples, sets/frozensets, Unicode/escaping, bytes, unsupported/fail-closed cases, >200 deterministic generated nested values, and the measured tuple-of-1000 hot path.
-
-The final exact-head source suites passed on Python 3.12 and 3.13.
-
-## Counterbalanced measured improvement
-
-Run `33798799289` measured both `reference -> candidate` and `candidate -> reference` orderings in the same job/environment using 3 warmups and 15 measured repetitions per order block.
-
-Artifacts:
-
-- Python 3.12: `9910239274`, digest `sha256:8b28b32bfbc3a9034ba768ca9a74b1168cad5ca366ab7f4e082af7ea5f12f6b7`
-- Python 3.13: `9910240220`, digest `sha256:4d698005945f35e63990c19fd0a20a40f9bcd62823c3819af7bc0829509b49e8`
-
-At size 1000:
-
-- Python 3.12 frozen reference median: `892,979 ns`
-- Python 3.12 candidate median: `497,965.5 ns`
-- measured improvement: `44.2355%`
-
-- Python 3.13 frozen reference median: `895,359 ns`
-- Python 3.13 candidate median: `495,893.5 ns`
-- measured improvement: `44.6151%`
-
-The improvement direction remains stable when measurement order is reversed in both environments.
-
-## Residual digest-path observation
-
-Same-job independently timed digest measurements estimate optimized canonical serialization at:
-
-- Python 3.12: `950,296 ppm` / `95.0296%` of size-1000 digest-path median
-- Python 3.13: `947,894 ppm` / `94.7894%` of size-1000 digest-path median
-
-This is a bounded decomposition estimate, not exact nested instrumentation. The absolute serialization cost is materially reduced, while the narrow residual workload remains serialization-dominant.
-
-## Final qualification
-
-Exact truth-sealed head `17975bcd1659c216404a7d8f5319877dc155ed19` passed run `33799603266` across:
-
-- Python 3.12 source tests;
-- Python 3.13 source tests;
-- G10 observatory regressions on both Python versions;
-- G11 counterbalanced comparison jobs on both Python versions;
-- RC0 wheel and normalized-sdist clean-install verification on both Python versions;
-- installed aggregate/qualification checks;
-- cross-Python release reproducibility.
-
-PR #31 merged that exact head as `554e8f0ea6c2a5a187a5cb675a9d25e8fd8da70b`.
-
-## Engineering decision
-
-The algorithmic optimization is admitted on measured evidence and exact-byte compatibility.
-
-No accelerator is selected by G11. Any future optimization or accelerator hypothesis must start from the optimized baseline and preserve canonical byte identity plus all constitutional/recovery/observability gates.
-
-## Public maturity and claim boundary
 
 Public maturity remains:
 
@@ -119,8 +45,139 @@ Public maturity remains:
 - hardware: `NONE`
 - deployment: `LOCAL`
 
-G11 is environment-specific software optimization evidence. It does not add federation, hardware qualification, physical control, T4/T5, formal proof, production-security certification, accelerator readiness, or semantic/scientific truth certification.
+## G12 origin
+
+G10 measured a narrowly scoped serialization-dominant `canonical.digest` workload. G11 removed the intermediate normalized object tree and improved the declared path while preserving exact canonical bytes. G11 still left a substantial residual serialization cost, so G12 was opened to characterize software cost before considering acceleration.
+
+Prime engineering laws remain:
+
+- `NoAcceleratorWithoutMeasuredBottleneck`;
+- `MeasuredBottleneck != AutomaticSiliconCandidate`;
+- `AlgorithmicImprovementBeforeHardwareAcceleration`.
+
+## Measurement correction
+
+The first G12 profiling revision enabled `tracemalloc` during timing and materially changed the serializer path. Those timing values were rejected before any finding was admitted.
+
+The accepted G12 measurement contract uses:
+
+- untraced timing runs;
+- separately traced allocation runs;
+- semantic-result identity equality across timing and allocation channels;
+- exact production-path measurements separated from proxy microkernels;
+- proxies explicitly treated as non-attributive.
+
+The rejected first run is retained only as a methodological negative result.
+
+## G12 residual characterization
+
+Corrected characterization run: `33802554652` on head `7b9ef7b49421e448f3cd7b2cfafbcc951c16e933`.
+
+At size 1000 before the G12 specialization:
+
+- Python 3.12 `canonical_bytes`: `554,250 ns` median;
+- Python 3.13 `canonical_bytes`: `560,508 ns` median;
+- traced peak allocation: `180,884 B` in both environments;
+- independent integer-leaf proxy: `536,061 ns` / `481,356 ns`;
+- integer-text proxy: `133,895 ns` / `135,300 ns`;
+- pre-encoded join proxy: `11,881 ns` / `12,768 ns`.
+
+Bounded finding G12-F1: for this homogeneous integer-tuple workload, repeated per-element integer emission/dispatch and temporary-byte allocation are stronger optimization targets than the final join alone. This is a supported hypothesis, not exact nested time attribution.
+
+## Reference candidate adjudication
+
+G12 measured two byte-identical software-only candidates under run `33802909806`:
+
+1. growing `bytearray` emitter;
+2. flattened-parts + final join.
+
+At size 1000 the growing-buffer candidate improved latency by about `43.23%` / `40.91%` with traced peak allocation of `60,636 B`.
+
+The parts-join candidate was slightly faster but used approximately `418,707 B` traced peak allocation. It was therefore rejected as the balanced production choice.
+
+No native or hardware accelerator was selected.
+
+## G12 production specialization
+
+The evidence-selected production specialization applies only to homogeneous tuples satisfying `type(item) is int`.
+
+It:
+
+- emits the canonical envelope and tuple representation into one growing buffer;
+- validates tuple membership during the same emission pass;
+- rolls back the attempted buffer and delegates to the generic G11 path on the first non-plain-int element;
+- excludes `bool`, `IntEnum`, mixed tuples and other subtype cases from the specialization;
+- leaves every other declared canonical type on the generic path;
+- preserves the frozen G1 implementation as the exact differential oracle.
+
+No canonical byte format changed.
+
+## Current closure-candidate measurement
+
+Implementation head `e1bacf31afa3fc76107d394da2aa95c41fee7d53` passed G12 profile run `33803524078`.
+
+Artifacts:
+
+- Python 3.12: `9911983142`, digest `sha256:fe5d2a5601fee1860b711fcd9fa1cafe87d809704d4d30a70fa35cfdc35bfb07`;
+- Python 3.13: `9911984318`, digest `sha256:6a7e35902d6aeff397545f6adb46be554d0776bb1bbb19017432a0917a835124`.
+
+At size 1000:
+
+- Python 3.12 production median: `319,507 ns`;
+- Python 3.13 production median: `268,463 ns`;
+- traced peak allocation: `60,608 B` in both environments.
+
+The balanced standalone bytearray reference measured `320,538 ns` / `259,759 ns`. The production/reference difference is within about ±3.3%, so further micro-polishing of this design is not justified by these runner-bound measurements.
+
+## Frozen-G1 same-job differential
+
+Inherited full CI `33803524089` measured the current production implementation against the frozen G1 reference under the same counterbalanced job design.
+
+Artifacts:
+
+- Python 3.12: `9911991159`, digest `sha256:5b5696f53725ae457e97e47ea7b0224f009a74e03872cc430a726a7a928dd4d1`;
+- Python 3.13: `9911995303`, digest `sha256:7033a0bcfd516f7df0e2806629bf32af748c7269cdd43e2a6adeaddb3b8f363b`.
+
+Size-1000 counterbalanced medians:
+
+- Python 3.12 frozen G1: `921,496 ns`; G12 current: `312,493 ns`; improvement: `66.09%`;
+- Python 3.13 frozen G1: `893,526.5 ns`; G12 current: `328,540.5 ns`; improvement: `63.23%`.
+
+Exact result bytes matched in every measured pair.
+
+Python 3.12 independently timed digest median was `336,468 ns`, yielding a bounded serialization-share estimate of `928,745 ppm` / `92.87%`.
+
+Python 3.13 independently timed digest median (`325,571 ns`) was slightly below the independently timed serializer median, so the campaign correctly emitted no serialization-share estimate rather than inventing a negative remainder.
+
+## Full inherited qualification
+
+Exact implementation head `e1bacf31afa3fc76107d394da2aa95c41fee7d53` passed CI run `33803524089` across:
+
+- source tests on Python 3.12 and 3.13;
+- canonical differential/golden tests;
+- G10 observatory regressions;
+- G11 frozen-reference comparison regressions;
+- RC0 wheel and normalized-sdist clean installs on both Python versions;
+- installed aggregate/qualification checks;
+- cross-Python release reproducibility.
+
+## Engineering decision
+
+The one-pass growing-buffer homogeneous plain-int tuple specialization is the G12 closure candidate.
+
+The evidence rejects:
+
+- proxy ratios as exact nested attribution;
+- timing under `tracemalloc` as performance evidence;
+- the high-allocation parts-join candidate as the balanced production choice;
+- premature C/Rust/SIMD/GPU/FPGA/ASIC/QPU work.
+
+Residual serialization remains material for the declared workload, but timing share alone is not sufficient to select acceleration.
+
+## Claim boundary
+
+G12 adds a narrowly scoped byte-identical software specialization and environment-specific performance/allocation evidence only. It does not add federation, distributed consensus, physical control, T4/T5, formal proof, production-security certification, hardware qualification, accelerator readiness, broad deployment readiness, or semantic/scientific truth certification.
 
 ## Next admissible action
 
-Qualify and merge the metadata-only G11 post-merge state seal. After that, choose G12 from the optimized baseline using measured evidence. The conservative default is residual canonicalization cost characterization / allocation-specialization analysis before any hardware implementation. Any accelerator work must begin as a hypothesis with explicit Amdahl, transfer-cost, and verification evidence—not as an implementation assumption.
+Complete ADR/traceability/manifest/state sealing for PR #34, then require a new exact-head full CI plus G12 profile because documentation changes move the head. Only after that may PR #34 leave draft and merge. Post-merge, perform a metadata truth seal before selecting G13 from the measured optimized baseline.
