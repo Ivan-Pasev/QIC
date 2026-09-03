@@ -2,10 +2,9 @@
 """Run bounded G12 residual canonicalization characterization.
 
 Timing and allocation are measured in separate channels. `tracemalloc` is never
-enabled for the timing channel, because observer overhead would materially
-change the measured serializer path. Proxy microkernels remain explicitly
-non-attributive: they indicate operation-scale behavior, not exact nested time
-shares inside `canonical_bytes`.
+enabled for the timing channel. Proxy microkernels remain explicitly non-
+attributive. Two software-only homogeneous-int tuple candidates are measured as
+reference experiments; neither changes the production `canonical_bytes` path.
 """
 
 from __future__ import annotations
@@ -21,13 +20,43 @@ from qic.core.digest import digest_hex
 from qic.observatory import MeasurementClass, PerformanceEnvironment, PerformanceObservatory, WorkloadDescriptor
 
 SIZES = (10, 100, 1_000)
+PREFIX = b'{"$canonical":"QIC-CANONICAL/1.0","value":{"$type":"tuple","items":['
+SUFFIX = b']}}'
+INT_PREFIX = b'{"$type":"int","value":"'
+INT_SUFFIX = b'"}'
 CLAIM_BOUNDARY = (
-    "Environment-specific G12 residual-cost characterization only. Timing and allocation "
-    "are separate measurement channels; tracemalloc is excluded from timing. Exact production-path "
-    "measurements and proxy microkernels are distinguished explicitly. Proxy timings are not exact "
-    "nested attribution. No accelerator, native extension, hardware, federation, T4/T5, maturity, "
-    "or universal performance inference."
+    "Environment-specific G12 residual-cost characterization only. Timing and allocation are separate "
+    "measurement channels; tracemalloc is excluded from timing. Exact production-path measurements, "
+    "proxy microkernels, and byte-identical software reference candidates are distinguished explicitly. "
+    "Proxy timings are not exact nested attribution and reference candidates are not production changes. "
+    "No accelerator, native extension, hardware, federation, T4/T5, maturity, or universal performance inference."
 )
+
+
+def _int_tuple_bytearray_candidate(payload: tuple[int, ...]) -> bytes:
+    out = bytearray(PREFIX)
+    for index, item in enumerate(payload):
+        if type(item) is not int:
+            raise TypeError("G12 reference candidate accepts plain-int tuples only")
+        if index:
+            out.append(44)
+        out.extend(INT_PREFIX)
+        out.extend(str(item).encode("ascii"))
+        out.extend(INT_SUFFIX)
+    out.extend(SUFFIX)
+    return bytes(out)
+
+
+def _int_tuple_parts_candidate(payload: tuple[int, ...]) -> bytes:
+    parts: list[bytes] = [PREFIX]
+    for index, item in enumerate(payload):
+        if type(item) is not int:
+            raise TypeError("G12 reference candidate accepts plain-int tuples only")
+        if index:
+            parts.append(b',')
+        parts.extend((INT_PREFIX, str(item).encode("ascii"), INT_SUFFIX))
+    parts.append(SUFFIX)
+    return b''.join(parts)
 
 
 def _descriptor(workload_id: str, title: str, size: int, channel: str) -> WorkloadDescriptor:
@@ -67,17 +96,7 @@ def _memory_summary(run) -> dict[str, int | float]:
     }
 
 
-def _measure(
-    observatory: PerformanceObservatory,
-    *,
-    workload_id: str,
-    title: str,
-    classification: str,
-    size: int,
-    operation,
-    warmups: int,
-    repetitions: int,
-) -> dict[str, object]:
+def _measure(observatory, *, workload_id, title, classification, size, operation, warmups, repetitions):
     timing_descriptor = _descriptor(workload_id, title, size, "timing")
     timing_run = observatory.run(
         timing_descriptor,
@@ -87,7 +106,6 @@ def _measure(
         repetitions=repetitions,
         trace_memory=False,
     )
-
     memory_descriptor = _descriptor(workload_id, title, size, "memory")
     memory_run = observatory.run(
         memory_descriptor,
@@ -97,10 +115,8 @@ def _measure(
         repetitions=repetitions,
         trace_memory=True,
     )
-
     if timing_run.samples[0].result_digest != memory_run.samples[0].result_digest:
         raise RuntimeError(f"result identity differs between timing and memory channels for {workload_id}")
-
     return {
         "workload_id": workload_id,
         "classification": classification,
@@ -124,12 +140,13 @@ def main() -> int:
     args.output.mkdir(parents=True, exist_ok=True)
     environment = PerformanceEnvironment.capture(
         configuration={
-            "campaign": "QIC-G12-RESIDUAL-PROFILE/2.0",
+            "campaign": "QIC-G12-RESIDUAL-PROFILE/3.0",
             "sizes": SIZES,
             "warmups": args.warmups,
             "repetitions": args.repetitions,
             "timing_trace_memory": False,
             "allocation_trace_memory": True,
+            "reference_candidates": ("bytearray", "parts_join"),
         }
     )
     observatory = PerformanceObservatory(environment)
@@ -146,128 +163,61 @@ def main() -> int:
         production_inner = _encode_value(payload)
         if production_bytes != b'{"$canonical":"QIC-CANONICAL/1.0","value":' + production_inner + b'}':
             raise SystemExit(f"production envelope identity failed at size={size}")
+        bytearray_bytes = _int_tuple_bytearray_candidate(payload)
+        parts_bytes = _int_tuple_parts_candidate(payload)
+        if bytearray_bytes != production_bytes or parts_bytes != production_bytes:
+            raise SystemExit(f"G12 reference candidate byte identity failed at size={size}")
 
         exact = [
-            _measure(
-                observatory,
-                workload_id="g12.exact.canonical_bytes",
-                title="G12 exact production canonical_bytes",
-                classification="EXACT_PRODUCTION_PATH",
-                size=size,
-                operation=lambda payload=payload: canonical_bytes(payload),
-                warmups=args.warmups,
-                repetitions=args.repetitions,
-            ),
-            _measure(
-                observatory,
-                workload_id="g12.exact.encode_value_tuple",
-                title="G12 exact production tuple _encode_value",
-                classification="EXACT_PRODUCTION_INTERNAL",
-                size=size,
-                operation=lambda payload=payload: _encode_value(payload),
-                warmups=args.warmups,
-                repetitions=args.repetitions,
-            ),
-            _measure(
-                observatory,
-                workload_id="g12.exact.digest_hex",
-                title="G12 exact digest_hex end path",
-                classification="EXACT_END_PATH",
-                size=size,
-                operation=lambda payload=payload: digest_hex(payload, domain="g12.residual"),
-                warmups=args.warmups,
-                repetitions=args.repetitions,
-            ),
+            _measure(observatory, workload_id="g12.exact.canonical_bytes", title="G12 exact production canonical_bytes", classification="EXACT_PRODUCTION_PATH", size=size, operation=lambda payload=payload: canonical_bytes(payload), warmups=args.warmups, repetitions=args.repetitions),
+            _measure(observatory, workload_id="g12.exact.encode_value_tuple", title="G12 exact production tuple _encode_value", classification="EXACT_PRODUCTION_INTERNAL", size=size, operation=lambda payload=payload: _encode_value(payload), warmups=args.warmups, repetitions=args.repetitions),
+            _measure(observatory, workload_id="g12.exact.digest_hex", title="G12 exact digest_hex end path", classification="EXACT_END_PATH", size=size, operation=lambda payload=payload: digest_hex(payload, domain="g12.residual"), warmups=args.warmups, repetitions=args.repetitions),
         ]
 
         proxies = [
-            _measure(
-                observatory,
-                workload_id="g12.proxy.integer_leaf_batch",
-                title="Proxy: encode integer leaves independently",
-                classification="PROXY_NON_ATTRIBUTIVE",
-                size=size,
-                operation=lambda payload=payload: tuple(_encode_value(item) for item in payload),
-                warmups=args.warmups,
-                repetitions=args.repetitions,
-            ),
-            _measure(
-                observatory,
-                workload_id="g12.proxy.integer_text_batch",
-                title="Proxy: decimal integer text emission",
-                classification="PROXY_NON_ATTRIBUTIVE",
-                size=size,
-                operation=lambda payload=payload: tuple(str(item).encode("ascii") for item in payload),
-                warmups=args.warmups,
-                repetitions=args.repetitions,
-            ),
-            _measure(
-                observatory,
-                workload_id="g12.proxy.preencoded_join",
-                title="Proxy: comma join of pre-encoded leaves",
-                classification="PROXY_NON_ATTRIBUTIVE",
-                size=size,
-                operation=lambda encoded_leaves=encoded_leaves: b','.join(encoded_leaves),
-                warmups=args.warmups,
-                repetitions=args.repetitions,
-            ),
-            _measure(
-                observatory,
-                workload_id="g12.proxy.json_string_batch",
-                title="Proxy: JSON string escaping/encoding batch",
-                classification="PROXY_NON_ATTRIBUTIVE",
-                size=size,
-                operation=lambda text_payload=text_payload: tuple(_json_string(item) for item in text_payload),
-                warmups=args.warmups,
-                repetitions=args.repetitions,
-            ),
-            _measure(
-                observatory,
-                workload_id="g12.proxy.mapping_encode",
-                title="Proxy family: production mapping encoding with reversed input order",
-                classification="PAYLOAD_FAMILY_COMPARISON",
-                size=size,
-                operation=lambda mapping_payload=mapping_payload: _encode_value(mapping_payload),
-                warmups=args.warmups,
-                repetitions=args.repetitions,
-            ),
-            _measure(
-                observatory,
-                workload_id="g12.proxy.set_encode",
-                title="Proxy family: production set encoding and ordering",
-                classification="PAYLOAD_FAMILY_COMPARISON",
-                size=size,
-                operation=lambda set_payload=set_payload: _encode_value(set_payload),
-                warmups=args.warmups,
-                repetitions=args.repetitions,
-            ),
+            _measure(observatory, workload_id="g12.proxy.integer_leaf_batch", title="Proxy: encode integer leaves independently", classification="PROXY_NON_ATTRIBUTIVE", size=size, operation=lambda payload=payload: tuple(_encode_value(item) for item in payload), warmups=args.warmups, repetitions=args.repetitions),
+            _measure(observatory, workload_id="g12.proxy.integer_text_batch", title="Proxy: decimal integer text emission", classification="PROXY_NON_ATTRIBUTIVE", size=size, operation=lambda payload=payload: tuple(str(item).encode("ascii") for item in payload), warmups=args.warmups, repetitions=args.repetitions),
+            _measure(observatory, workload_id="g12.proxy.preencoded_join", title="Proxy: comma join of pre-encoded leaves", classification="PROXY_NON_ATTRIBUTIVE", size=size, operation=lambda encoded_leaves=encoded_leaves: b','.join(encoded_leaves), warmups=args.warmups, repetitions=args.repetitions),
+            _measure(observatory, workload_id="g12.proxy.json_string_batch", title="Proxy: JSON string escaping/encoding batch", classification="PROXY_NON_ATTRIBUTIVE", size=size, operation=lambda text_payload=text_payload: tuple(_json_string(item) for item in text_payload), warmups=args.warmups, repetitions=args.repetitions),
+            _measure(observatory, workload_id="g12.proxy.mapping_encode", title="Proxy family: production mapping encoding with reversed input order", classification="PAYLOAD_FAMILY_COMPARISON", size=size, operation=lambda mapping_payload=mapping_payload: _encode_value(mapping_payload), warmups=args.warmups, repetitions=args.repetitions),
+            _measure(observatory, workload_id="g12.proxy.set_encode", title="Proxy family: production set encoding and ordering", classification="PAYLOAD_FAMILY_COMPARISON", size=size, operation=lambda set_payload=set_payload: _encode_value(set_payload), warmups=args.warmups, repetitions=args.repetitions),
         ]
+
+        candidates = [
+            _measure(observatory, workload_id="g12.candidate.int_tuple_bytearray", title="Reference candidate: bytearray homogeneous-int tuple emitter", classification="BYTE_IDENTICAL_SOFTWARE_REFERENCE_CANDIDATE", size=size, operation=lambda payload=payload: _int_tuple_bytearray_candidate(payload), warmups=args.warmups, repetitions=args.repetitions),
+            _measure(observatory, workload_id="g12.candidate.int_tuple_parts_join", title="Reference candidate: flattened-parts homogeneous-int tuple emitter", classification="BYTE_IDENTICAL_SOFTWARE_REFERENCE_CANDIDATE", size=size, operation=lambda payload=payload: _int_tuple_parts_candidate(payload), warmups=args.warmups, repetitions=args.repetitions),
+        ]
+
+        production_median = exact[0]["timing"]["median_ns"]
+        for candidate in candidates:
+            candidate_median = candidate["timing"]["median_ns"]
+            candidate["derived_candidate_over_production"] = candidate_median / production_median
+            candidate["derived_improvement_fraction"] = (production_median - candidate_median) / production_median
+            candidate["byte_identity"] = True
 
         records.append(
             {
                 "size": size,
                 "exact_production_measurements": exact,
                 "proxy_measurements": proxies,
+                "reference_candidate_measurements": candidates,
                 "interpretation_rule": (
-                    "Timing excludes tracemalloc. Allocation uses a separate traced run. Exact measurements "
-                    "may be compared within this environment. Proxy measurements indicate operation-scale "
-                    "behavior only and are not exact nested time shares."
+                    "Timing excludes tracemalloc. Allocation uses a separate traced run. Proxy measurements "
+                    "are not exact nested time shares. Reference candidates are byte-identical experiments "
+                    "and do not change the production path."
                 ),
             }
         )
 
     manifest = {
-        "format": "QIC-G12-RESIDUAL-PROFILE/2.0",
+        "format": "QIC-G12-RESIDUAL-PROFILE/3.0",
         "claim_boundary": CLAIM_BOUNDARY,
         "environment": {**asdict(environment), "digest": environment.digest},
         "warmups": args.warmups,
         "repetitions": args.repetitions,
         "records": records,
     }
-    (args.output / "manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({"pass": True, "environment": environment.digest, "sizes": len(records)}))
     return 0
 
