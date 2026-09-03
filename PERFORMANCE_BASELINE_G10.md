@@ -1,6 +1,6 @@
 # QIC G10 — Measured Performance Baseline 01
 
-Status: **MEASURED / BOTTLENECK UNRESOLVED**
+Status: **MEASURED / NARROW BOTTLENECK ADJUDICATED**
 
 This record summarizes the first bounded G10 performance campaign. It is environment-specific measurement evidence, not a portable speed guarantee, not a hardware/accelerator result, and not a maturity promotion.
 
@@ -63,16 +63,36 @@ Approximate 10→100 / 100→1000 median ratios:
 - Python 3.12 `canonical.digest`: `5.03×` / `9.34×`
 - Python 3.13 `canonical.digest`: `6.01×` / `9.16×`
 
-These observations are consistent with work increasing materially with input size and becoming closer to linear-in-size behavior at the larger measured interval. They are **not sufficient** to attribute runtime share among serialization, hashing, allocation, interpreter overhead, memory behavior, or other components.
+These observations are consistent with work increasing materially with input size and becoming closer to linear-in-size behavior at the larger measured interval.
+
+## Paired nested-path decomposition
+
+The digest path explicitly calls `canonical_bytes(value)` before SHA-256 hashing. At size 1000, equal-payload paired medians therefore provide a bounded estimate of the serialization share of the total digest path:
+
+- Python 3.12: `1,001,017 / 1,015,675 = 985,568 ppm = 98.5568%`
+- Python 3.13: `906,517 / 914,310 = 991,476 ppm = 99.1476%`
+
+Residual digest-wrapper medians:
+
+- Python 3.12: `14,658 ns`
+- Python 3.13: `7,793 ns`
+
+This comparison uses independent medians rather than nested instrumentation, so it is an estimate. The share is nevertheless large and directionally consistent in both supported Python environments.
 
 ## Bottleneck adjudication
 
-`BottleneckClass = UNKNOWN / UNRESOLVED`
+`G10-BF-001 = SERIALIZATION_BOUND`
 
-Reason: G10 has measured scaling but has not yet performed equal-semantic-work cost decomposition that isolates component runtime shares. Therefore `NoAcceleratorWithoutMeasuredBottleneck` prevents creation of a hardware accelerator recommendation from this baseline alone.
+Scope: current CPython `canonical.digest` path for a tuple of 1000 integers in the two measured GitHub-hosted Linux environments only.
 
-No `AcceleratorCandidate` is admitted from this campaign.
+This does not establish a QIC-wide bottleneck and does not imply the same share for other payload types, scales, interpreters, CPUs, or future implementations.
 
-## Next measurement
+## Decision
 
-Run paired cost-decomposition experiments over canonical serialization versus digest wrapping, preserving equal payloads and environment. Then extend the same campaign machinery to the current transition/Chrono/KBI/journal/recovery end-to-end surfaces using explicit fixture adapters. Only a measured component share may support an `OBSERVED` bottleneck finding.
+`AlgorithmicImprovementBeforeHardwareAcceleration`.
+
+No `AcceleratorCandidate` is admitted from this campaign. The next optimization target is the software canonicalization algorithm/representation while preserving exact `QIC-CANONICAL/1.0` bytes and the complete G1/G8/G9 regression surface.
+
+## Constitutional measurement boundary
+
+G10 includes an explicit measured unauthorized-transition test. When `TransitionEngine.execute` is observed with an insufficient grant, every measured repetition must remain `AUTHORITY_DENIED` and preserve the exact original state object. Benchmark instrumentation therefore does not create a tested authority-bypass mode.
