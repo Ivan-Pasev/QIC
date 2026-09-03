@@ -4,114 +4,98 @@ Last updated: 2026-09-03
 
 ## Canonical status
 
-**Phase:** `QIC-G10 — Performance Observatory + Workload Atlas + Scaling/Bottleneck Evidence`
+**Completed slice:** `QIC-G10 — Performance Observatory + Workload Atlas + Scaling/Bottleneck Evidence`
 
-**Status:** ACTIVE / final qualification pending
+**Status:** MERGED / state seal in qualification
 
-**Issue:** #27
+**G10 issue:** #27
 
-**PR:** #28 (draft until exact-head closure gate)
+**G10 PR:** #28 — MERGED
 
-**Branch:** `qic-g10/performance-observatory`
+**G10 merge commit:** `4d3d6896091c3b70355168d549ea172f1f92e0c7`
 
-**Qualified frozen baseline:** G0–G9 + RC0
+**Qualified G10 head:** `d9e279cd494cd481dbbfeaec8ee4279dd1854276`
+
+**Final G10 CI:** `33720658546` — PASS
+
+**Release candidate baseline:** `1.0.0rc0`
 
 **Public repository:** `Ivan-Pasev/QIC`
 
 **Canonical continuity root:** Google Drive `QIC_CANONICAL_WORKING_TREE`
 
-## Frozen baseline
+## Frozen qualified baseline
 
-- G0–G7 merged constitutional implementation slices.
-- G8 adversarial qualification merged as `b0c4f446dce21317cbd4cfc943633ee57507a8c8`.
-- RC0 integrated release convergence merged via PR #21 as `588694dda816c6cb712d1812c6bbe23ca5092198`.
-- RC0 publication metadata PR #25 merged as `74acec6c1d6569e04eec51c8745f718009f24d3d`; actual GitHub `v1.0.0rc0` release/tag remains separately publication-pending until directly verified.
-- G9 durable journal/recovery merged via PR #23 as `8b297fea49d6dc76c0236fa9cca6bf8d9af7f249`.
-- G9 post-merge state seal merged as `4f53e008fa85694b4c0a3c48f262a0290658e87e`.
+- G0–G8 merged constitutional implementation/qualification stack.
+- RC0 integrated release convergence merged; actual GitHub `v1.0.0rc0` tag/release remains separately publication-pending until directly verified.
+- G9 durable journal/recovery merged and post-merge sealed.
+- G10 performance observatory merged after exact-head qualification.
 - T4 Physical and T5 Evolutionary remain `NOT_ENABLED`.
 
-## G10 implemented on active branch
+## G10 closure
 
-- immutable `PerformanceEnvironment`, `WorkloadDescriptor`, `PerformanceSample`, and derived `PerformanceSummary`;
-- explicit warmups versus measured repetitions;
-- wall/CPU/optional traced-memory capture;
-- semantic-result digest stability and result-preserving measurement;
-- `MICROKERNEL` versus `END_TO_END` distinction;
-- current G0–G9 workload atlas with fail-closed live-symbol resolution;
-- scaling/cost/regression/bottleneck/accelerator-hypothesis evidence models;
-- canonical fixed-point policy for performance identity fields;
-- immutable raw `CampaignSpec` / `CampaignRecord` and `PerformanceCampaignStore`;
-- tamper detection, conflicting campaign rejection, and idempotent identical persistence;
-- CI-generated raw performance artifacts on Python 3.12 and 3.13;
-- ADR-0012;
-- human-readable measured baseline and findings records.
+G10 established a read-only measurement substrate over the existing G0–G9 runtime:
 
-## Canonical-float defect discovered and contained
+- immutable environment/workload/sample records;
+- explicit warmup versus measured repetitions;
+- wall/CPU/optional traced-memory observation;
+- semantic-result identity enforcement and unchanged workload result;
+- workload atlas bound only to live current callables;
+- raw immutable campaign evidence persistence with tamper/conflict detection;
+- canonical integer/fixed-point performance evidence; floating summaries remain derived views;
+- scaling, cost, regression, bottleneck, and accelerator-hypothesis evidence objects;
+- CI-emitted raw campaign artifacts on Python 3.12 and 3.13;
+- benchmark authority-denial regression proving observability does not bypass G4 authority;
+- ADR-0012, traceability, measured baseline, and findings records.
 
-The first performance-evidence model attempted to include floating statistics/runtime shares inside `QIC-CANONICAL/1.0`. CI correctly failed because G1 forbids floats. G10 preserved the G1 law: canonical performance identity now uses integer/fixed-point fields and raw sample evidence; floating summaries remain derived non-identity views.
+## G10 measured evidence
 
-## First measured campaign
+Initial campaign run: `33719689186`
 
-GitHub Actions run: `33719689186`
+Measured head: `849c78fd4df5d5c0c0881ef7dfb2f5b20a75f61f`
 
-Measured source head: `849c78fd4df5d5c0c0881ef7dfb2f5b20a75f61f`
+Initial artifacts:
 
-Artifacts:
+- Python 3.12 artifact `9879769833`, digest `sha256:0de255c8b52b74df4a5787799d738f698e0a38c415c7efea02fbc5552c812d39`
+- Python 3.13 artifact `9879770182`, digest `sha256:58f985f5b620d7e6b3d4143631387b88d43b3e342d2adc5c9b6aa3d6271bef90`
 
-- Python 3.12: artifact `9879769833`, digest `sha256:0de255c8b52b74df4a5787799d738f698e0a38c415c7efea02fbc5552c812d39`
-- Python 3.13: artifact `9879770182`, digest `sha256:58f985f5b620d7e6b3d4143631387b88d43b3e342d2adc5c9b6aa3d6271bef90`
-
-Campaign: canonical serialization and domain-separated digest at sizes 10, 100, and 1000; 2 warmups + 7 measured repetitions; environment-specific timing only.
-
-## First bottleneck finding
+Finding:
 
 `G10-BF-001 = SERIALIZATION_BOUND`
 
-Scope: current Python `canonical.digest` path for a tuple of 1000 integers in the two measured GitHub-hosted Linux environments.
+Scope: current CPython `canonical.digest` path for a tuple of 1000 integers in the two measured GitHub-hosted Linux environments only.
 
-At size 1000, paired medians indicate canonical serialization contributes approximately:
+Estimated canonical-serialization share of digest-path median:
 
-- Python 3.12: `985,568 ppm` / `98.5568%` of digest-path median;
-- Python 3.13: `991,476 ppm` / `99.1476%` of digest-path median.
+- Python 3.12: `985,568 ppm` / `98.5568%`
+- Python 3.13: `991,476 ppm` / `99.1476%`
 
-This is a narrow measured software finding, not a QIC-wide bottleneck claim.
+This is not a QIC-wide bottleneck claim.
 
 ## Decision
 
 `AlgorithmicImprovementBeforeHardwareAcceleration`
 
-No GPU, FPGA, ASIC, SIMD, multicore, photonic, or QPU accelerator candidate is admitted from G10-BF-001.
+No accelerator candidate is admitted from G10-BF-001.
 
-The next optimization target is the software canonicalization algorithm/representation while preserving exact `QIC-CANONICAL/1.0` bytes and the full G1/G8/G9 regression surface.
+The evidence-selected next slice is **G11 — Canonicalizer Algorithmic Optimization + Byte-Identity Preservation + Measured Regression Evidence**.
 
-## Prime laws
+G11 must:
 
-`NoAcceleratorWithoutMeasuredBottleneck`
-
-`MeasuredBottleneck != AutomaticSiliconCandidate`
-
-`AlgorithmicImprovementBeforeHardwareAcceleration`
+1. optimize software canonicalization before any hardware proposal;
+2. preserve exact `QIC-CANONICAL/1.0` output bytes and all G1 golden vectors;
+3. preserve G8/G9/G10 authority, qualification, recovery, and observability regressions;
+4. measure optimized versus frozen G10 baseline under equal semantic work;
+5. reject an optimization if canonical bytes differ;
+6. admit performance improvement only from measured evidence;
+7. reconsider accelerator hypotheses only if a material residual bottleneck remains after software optimization.
 
 ## Claim boundary
 
-G10 adds environment-specific software performance evidence only. It does not increase semantic, formal, hardware, deployment, federation, physical, security, or truth maturity. Public maturity remains semantic `TESTED`, evidence `SUPPORTED`, formal `NONE`, hardware `NONE`, deployment `LOCAL`.
+Public maturity remains semantic `TESTED`, evidence `SUPPORTED`, formal `NONE`, hardware `NONE`, deployment `LOCAL`.
 
-T4/T5 remain disabled. G10 does not create a privileged benchmark path and does not bypass authority, invariants, canonical serialization, Chrono, witness, KBI, qualification, journal, or recovery semantics.
-
-## Closure gate still pending
-
-Before G10 merges:
-
-1. synchronize `TRACEABILITY.yaml` and source/packaged manifests;
-2. keep G10 lifecycle `ACTIVE` until exact-head CI is green;
-3. require Python 3.12/3.13 source suites;
-4. require G10 raw observatory artifact jobs;
-5. require both RC0 clean wheel/sdist installed verification paths;
-6. require cross-Python RC0 reproducibility;
-7. adversarially review PR #28 for measurement/authority/claim-boundary drift;
-8. merge only the exact qualified head;
-9. perform a post-merge state seal setting G10 to `MERGED`.
+G10 adds environment-specific software performance evidence only. It does not add federation, hardware, physical control, T4/T5, formal proof, production-security certification, or semantic/scientific truth certification.
 
 ## Continuation rule
 
-Preserve RC0 and G9 as frozen qualified baselines. Performance evidence may justify software optimization or a future accelerator hypothesis only within its measured scope; it may not silently promote architecture or maturity.
+Preserve RC0, G9, and G10 as frozen qualified baselines. The next implementation must be measured algorithmic optimization of the canonicalizer, not premature acceleration.
