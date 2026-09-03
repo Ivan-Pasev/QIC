@@ -1,17 +1,21 @@
-"""Evidence models for QIC G10 performance qualification.
+"""Canonical evidence models for QIC G10 performance qualification.
 
-These records describe measured software behavior. They do not select hardware,
-change runtime semantics, or promote QIC maturity.
+Measured statistical views may contain floats, but QIC-CANONICAL/1.0 deliberately
+forbids floats. Canonical performance evidence therefore binds raw/sample evidence
+digests plus integer or fixed-point fields. Floating summaries remain derived views,
+not identity-bearing canonical state.
 """
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from enum import Enum
 
 from .core.digest import digest_hex
 from .observatory import BottleneckClass, PerformanceSummary, WorkloadDescriptor
+
+PPM = 1_000_000
+SPEEDUP_MILLI = 1_000
 
 
 class CostComponent(str, Enum):
@@ -85,21 +89,34 @@ class ScalePoint:
     size: int
     workload_digest: str
     environment_digest: str
-    summary: PerformanceSummary
+    sample_evidence_digest: str
     result_digest: str
+    summary: PerformanceSummary
 
     def __post_init__(self) -> None:
         if type(self.size) is not int or self.size <= 0:
             raise ValueError("size must be a positive int")
         _text(self.workload_digest, name="workload_digest")
         _text(self.environment_digest, name="environment_digest")
+        _text(self.sample_evidence_digest, name="sample_evidence_digest")
         _text(self.result_digest, name="result_digest")
         if not isinstance(self.summary, PerformanceSummary):
             raise TypeError("summary must be PerformanceSummary")
 
     @property
     def digest(self) -> str:
-        return digest_hex(self, domain="performance.scale_point")
+        # Summary is intentionally excluded: it is a derived statistical view that
+        # contains floats. Canonical identity binds the immutable sample evidence.
+        return digest_hex(
+            {
+                "size": self.size,
+                "workload_digest": self.workload_digest,
+                "environment_digest": self.environment_digest,
+                "sample_evidence_digest": self.sample_evidence_digest,
+                "result_digest": self.result_digest,
+            },
+            domain="performance.scale_point",
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,7 +140,15 @@ class ScalingCampaign:
 
     @property
     def digest(self) -> str:
-        return digest_hex(self, domain="performance.scaling_campaign")
+        return digest_hex(
+            {
+                "campaign_id": self.campaign_id,
+                "atlas_entry_digest": self.atlas_entry_digest,
+                "environment_digest": self.environment_digest,
+                "point_digests": tuple(point.digest for point in self.points),
+            },
+            domain="performance.scaling_campaign",
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,9 +189,9 @@ class RegressionEvidence:
     workload_digest: str
     baseline_environment_digest: str
     candidate_environment_digest: str
-    baseline_median_ns: float
-    candidate_median_ns: float
-    threshold_fraction: float
+    baseline_median_twice_ns: int
+    candidate_median_twice_ns: int
+    threshold_ppm: int
     classification: RegressionClass
 
     @classmethod
@@ -176,18 +201,23 @@ class RegressionEvidence:
         workload_digest: str,
         baseline_environment_digest: str,
         candidate_environment_digest: str,
-        baseline_median_ns: float,
-        candidate_median_ns: float,
-        threshold_fraction: float,
+        baseline_median_twice_ns: int,
+        candidate_median_twice_ns: int,
+        threshold_ppm: int,
     ) -> "RegressionEvidence":
-        if baseline_median_ns <= 0 or candidate_median_ns <= 0:
-            raise ValueError("median times must be positive")
-        if not 0 <= threshold_fraction < 1:
-            raise ValueError("threshold_fraction must be in [0, 1)")
-        ratio = candidate_median_ns / baseline_median_ns
-        if ratio > 1 + threshold_fraction:
+        if type(baseline_median_twice_ns) is not int or baseline_median_twice_ns <= 0:
+            raise ValueError("baseline_median_twice_ns must be positive int")
+        if type(candidate_median_twice_ns) is not int or candidate_median_twice_ns <= 0:
+            raise ValueError("candidate_median_twice_ns must be positive int")
+        if type(threshold_ppm) is not int or not 0 <= threshold_ppm < PPM:
+            raise ValueError("threshold_ppm must be integer in [0, 1_000_000)")
+
+        upper = baseline_median_twice_ns * (PPM + threshold_ppm)
+        lower = baseline_median_twice_ns * (PPM - threshold_ppm)
+        candidate_scaled = candidate_median_twice_ns * PPM
+        if candidate_scaled > upper:
             classification = RegressionClass.REGRESSION
-        elif ratio < 1 - threshold_fraction:
+        elif candidate_scaled < lower:
             classification = RegressionClass.IMPROVEMENT
         else:
             classification = RegressionClass.STABLE
@@ -195,9 +225,9 @@ class RegressionEvidence:
             workload_digest=workload_digest,
             baseline_environment_digest=baseline_environment_digest,
             candidate_environment_digest=candidate_environment_digest,
-            baseline_median_ns=float(baseline_median_ns),
-            candidate_median_ns=float(candidate_median_ns),
-            threshold_fraction=float(threshold_fraction),
+            baseline_median_twice_ns=baseline_median_twice_ns,
+            candidate_median_twice_ns=candidate_median_twice_ns,
+            threshold_ppm=threshold_ppm,
             classification=classification,
         )
 
@@ -205,10 +235,12 @@ class RegressionEvidence:
         _text(self.workload_digest, name="workload_digest")
         _text(self.baseline_environment_digest, name="baseline_environment_digest")
         _text(self.candidate_environment_digest, name="candidate_environment_digest")
-        if self.baseline_median_ns <= 0 or self.candidate_median_ns <= 0:
-            raise ValueError("median times must be positive")
-        if not 0 <= self.threshold_fraction < 1:
-            raise ValueError("threshold_fraction must be in [0, 1)")
+        if type(self.baseline_median_twice_ns) is not int or self.baseline_median_twice_ns <= 0:
+            raise ValueError("baseline_median_twice_ns must be positive int")
+        if type(self.candidate_median_twice_ns) is not int or self.candidate_median_twice_ns <= 0:
+            raise ValueError("candidate_median_twice_ns must be positive int")
+        if type(self.threshold_ppm) is not int or not 0 <= self.threshold_ppm < PPM:
+            raise ValueError("threshold_ppm must be integer in [0, 1_000_000)")
         if not isinstance(self.classification, RegressionClass):
             raise TypeError("classification must be RegressionClass")
 
@@ -222,7 +254,7 @@ class BottleneckFinding:
     finding_id: str
     workload_digest: str
     bottleneck_class: BottleneckClass
-    measured_runtime_share: float
+    measured_runtime_share_ppm: int
     evidence_digests: tuple[str, ...]
     rationale: str
     status: FindingStatus = FindingStatus.OBSERVED
@@ -235,11 +267,11 @@ class BottleneckFinding:
             raise TypeError("bottleneck_class must be BottleneckClass")
         if not isinstance(self.status, FindingStatus):
             raise TypeError("status must be FindingStatus")
-        if not 0 <= self.measured_runtime_share <= 1:
-            raise ValueError("measured_runtime_share must be in [0, 1]")
+        if type(self.measured_runtime_share_ppm) is not int or not 0 <= self.measured_runtime_share_ppm <= PPM:
+            raise ValueError("measured_runtime_share_ppm must be integer in [0, 1_000_000]")
         if self.status is FindingStatus.OBSERVED and self.bottleneck_class is BottleneckClass.UNKNOWN:
             raise ValueError("an observed finding cannot classify the bottleneck as UNKNOWN")
-        if self.status is FindingStatus.OBSERVED and self.measured_runtime_share <= 0:
+        if self.status is FindingStatus.OBSERVED and self.measured_runtime_share_ppm <= 0:
             raise ValueError("an observed finding requires positive measured runtime share")
         if not self.evidence_digests or any(not digest for digest in self.evidence_digests):
             raise ValueError("evidence_digests must contain at least one digest")
@@ -254,8 +286,8 @@ class AcceleratorCandidate:
     candidate_id: str
     finding_digest: str
     target: AcceleratorTarget
-    measured_runtime_share: float
-    assumed_component_speedup: float
+    measured_runtime_share_ppm: int
+    assumed_component_speedup_milli: int
     estimated_transfer_cost_ns: int
     verification_strategy: str
     status: FindingStatus = FindingStatus.HYPOTHESIS
@@ -268,10 +300,10 @@ class AcceleratorCandidate:
             raise TypeError("target must be AcceleratorTarget")
         if not isinstance(self.status, FindingStatus):
             raise TypeError("status must be FindingStatus")
-        if not 0 < self.measured_runtime_share <= 1:
-            raise ValueError("candidate requires a positive measured runtime share")
-        if not math.isfinite(self.assumed_component_speedup) or self.assumed_component_speedup <= 1:
-            raise ValueError("assumed_component_speedup must be finite and > 1")
+        if type(self.measured_runtime_share_ppm) is not int or not 0 < self.measured_runtime_share_ppm <= PPM:
+            raise ValueError("candidate requires positive measured_runtime_share_ppm")
+        if type(self.assumed_component_speedup_milli) is not int or self.assumed_component_speedup_milli <= SPEEDUP_MILLI:
+            raise ValueError("assumed_component_speedup_milli must be integer > 1000")
         if type(self.estimated_transfer_cost_ns) is not int or self.estimated_transfer_cost_ns < 0:
             raise ValueError("estimated_transfer_cost_ns must be a non-negative int")
         if self.status is FindingStatus.OBSERVED:
@@ -279,8 +311,8 @@ class AcceleratorCandidate:
 
     @property
     def amdahl_upper_bound(self) -> float:
-        p = self.measured_runtime_share
-        s = self.assumed_component_speedup
+        p = self.measured_runtime_share_ppm / PPM
+        s = self.assumed_component_speedup_milli / SPEEDUP_MILLI
         return 1.0 / ((1.0 - p) + (p / s))
 
     @property
