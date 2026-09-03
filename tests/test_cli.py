@@ -113,6 +113,7 @@ def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     assert manifest["implementation_sequence"]["RC0"] == "MERGED"
     assert manifest["implementation_sequence"]["G9"] == "MERGED"
     assert manifest["implementation_sequence"]["G10"] == "MERGED"
+    assert manifest["implementation_sequence"]["G11"] == "MERGED"
     assert manifest["release"]["phase"] == "RC0_QUALIFIED_PUBLICATION_PENDING"
     assert manifest["transition_profile"]["enabled"] == [
         family.value for family in sorted(ENABLED_FAMILIES, key=lambda item: item.value)
@@ -129,10 +130,12 @@ def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     assert "No formal-runtime verification claim" in manifest["explicit_nonclaims"]
     assert "No hardware-tested claim" in manifest["explicit_nonclaims"]
     assert "No universal durable crash-recovery guarantee" in manifest["explicit_nonclaims"]
-    assert manifest["last_completed_engineering"]["slice"] == "G10"
-    assert manifest["last_completed_engineering"]["merge_commit"] == "4d3d6896091c3b70355168d549ea172f1f92e0c7"
+    assert manifest["last_completed_engineering"]["slice"] == "G11"
+    assert manifest["last_completed_engineering"]["merge_commit"] == "554e8f0ea6c2a5a187a5cb675a9d25e8fd8da70b"
     assert manifest["performance_observatory"]["status"] == "MERGED"
     assert manifest["performance_observatory"]["qualified_run"] == "33720658546"
+    assert manifest["algorithmic_optimization"]["status"] == "MERGED"
+    assert manifest["algorithmic_optimization"]["qualified_run"] == "33799603266"
     claim_boundary = manifest["claim_boundary"]
     assert "certify semantic truth" in claim_boundary
     assert "universal durable crash recovery" in claim_boundary
