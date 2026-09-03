@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 from qic.core.canonical import _canonical_bytes_reference, canonical_bytes
@@ -106,19 +107,7 @@ def main() -> int:
     manifest = {
         "format": "QIC-G11-CANONICAL-COMPARISON-MANIFEST/1.0",
         "claim_boundary": CLAIM_BOUNDARY,
-        "environment": {
-            **environment.__dict__ if hasattr(environment, "__dict__") else {
-                "python_implementation": environment.python_implementation,
-                "python_version": environment.python_version,
-                "os_system": environment.os_system,
-                "os_release": environment.os_release,
-                "machine": environment.machine,
-                "processor": environment.processor,
-                "logical_cpu_count": environment.logical_cpu_count,
-                "configuration_digest": environment.configuration_digest,
-            },
-            "digest": environment.digest,
-        },
+        "environment": {**asdict(environment), "digest": environment.digest},
         "warmups": args.warmups,
         "repetitions": args.repetitions,
         "records": records,
