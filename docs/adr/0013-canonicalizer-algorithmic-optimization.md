@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed for G11 closure; implementation remains subject to exact-head CI and byte-identity qualification.
+Accepted and merged in G11 via PR #31 (`554e8f0ea6c2a5a187a5cb675a9d25e8fd8da70b`) after exact-head CI run `33799603266` passed.
 
 ## Context
 

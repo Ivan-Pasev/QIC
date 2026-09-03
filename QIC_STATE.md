@@ -4,21 +4,23 @@ Last updated: 2026-09-03
 
 ## Canonical status
 
-**Active slice:** `QIC-G11 — Canonicalizer Algorithmic Optimization + Byte-Identity Preservation + Measured Regression Evidence`
+**Completed slice:** `QIC-G11 — Canonicalizer Algorithmic Optimization + Byte-Identity Preservation + Measured Regression Evidence`
 
-**Status:** QUALIFIED / READY FOR MERGE
+**Status:** MERGED / post-merge state seal in qualification
 
 **G11 issue:** #30
 
-**G11 PR:** #31
+**G11 PR:** #31 — MERGED
 
-**Current branch:** `qic-g11/canonicalizer-optimization`
+**G11 merge commit:** `554e8f0ea6c2a5a187a5cb675a9d25e8fd8da70b`
 
-**Final qualified head:** `aae57341567b1e4d393222deda5d35e32e06a1f0`
+**Final qualified head:** `17975bcd1659c216404a7d8f5319877dc155ed19`
 
-**Final exact-head CI:** `33799262848` — PASS
+**Final exact-head CI:** `33799603266` — PASS
 
 **Counterbalanced measurement run:** `33798799289` — PASS on measurement head `e3d0f2b612be1861dd66a87e345d35695466c595`
+
+**Post-merge seal branch:** `qic-g11/post-merge-state-seal`
 
 **Release candidate baseline:** `1.0.0rc0`
 
@@ -32,6 +34,7 @@ Last updated: 2026-09-03
 - RC0 integrated release convergence merged; actual GitHub `v1.0.0rc0` tag/release remains publication-pending until directly verified.
 - G9 durable journal/recovery merged and post-merge sealed.
 - G10 performance observatory merged and post-merge sealed.
+- G11 canonicalizer algorithmic optimization merged; post-merge truth seal is the current metadata-only action.
 - T4 Physical and T5 Evolutionary remain `NOT_ENABLED`.
 
 ## G10 evidence-selected problem
@@ -42,13 +45,13 @@ Scope: the current CPython `canonical.digest` path for a tuple of 1000 integers 
 
 G10 decision: `AlgorithmicImprovementBeforeHardwareAcceleration`.
 
-## G11 candidate
+## G11 implementation
 
-The production `canonical_bytes` path now emits the already-declared typed JSON representation directly, avoiding the intermediate normalized Python object tree used by the frozen G1 implementation.
+The production `canonical_bytes` path emits the already-declared typed JSON representation directly, avoiding the intermediate normalized Python object tree used by the frozen G1 implementation.
 
 The frozen implementation remains available as `_canonical_bytes_reference` only for differential qualification.
 
-The candidate preserves exact `QIC-CANONICAL/1.0` bytes across the declared differential corpus. Any future byte divergence remains a release blocker regardless of performance.
+Exact `QIC-CANONICAL/1.0` bytes remain the compatibility gate. Any future byte divergence is a release blocker regardless of performance.
 
 ## Byte-identity evidence
 
@@ -88,7 +91,7 @@ This is a bounded decomposition estimate, not exact nested instrumentation. The 
 
 ## Final qualification
 
-Exact sealed head `aae57341567b1e4d393222deda5d35e32e06a1f0` passed run `33799262848` across:
+Exact truth-sealed head `17975bcd1659c216404a7d8f5319877dc155ed19` passed run `33799603266` across:
 
 - Python 3.12 source tests;
 - Python 3.13 source tests;
@@ -97,6 +100,8 @@ Exact sealed head `aae57341567b1e4d393222deda5d35e32e06a1f0` passed run `3379926
 - RC0 wheel and normalized-sdist clean-install verification on both Python versions;
 - installed aggregate/qualification checks;
 - cross-Python release reproducibility.
+
+PR #31 merged that exact head as `554e8f0ea6c2a5a187a5cb675a9d25e8fd8da70b`.
 
 ## Engineering decision
 
@@ -118,4 +123,4 @@ G11 is environment-specific software optimization evidence. It does not add fede
 
 ## Next admissible action
 
-Merge PR #31 only at exact head `aae57341567b1e4d393222deda5d35e32e06a1f0`, then perform post-merge truth sealing before opening the next evidence-selected optimization/research slice.
+Qualify and merge the metadata-only G11 post-merge state seal. After that, choose G12 from the optimized baseline using measured evidence. The conservative default is residual canonicalization cost characterization / allocation-specialization analysis before any hardware implementation. Any accelerator work must begin as a hypothesis with explicit Amdahl, transfer-cost, and verification evidence—not as an implementation assumption.
