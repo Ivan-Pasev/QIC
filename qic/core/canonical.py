@@ -17,6 +17,9 @@ from typing import Any, Final, Mapping
 
 
 CANONICAL_VERSION: Final[str] = "QIC-CANONICAL/1.0"
+_INT_TUPLE_PREFIX: Final[bytes] = b'{"$type":"tuple","items":['
+_INT_PREFIX: Final[bytes] = b'{"$type":"int","value":"'
+_INT_SUFFIX: Final[bytes] = b'"}'
 
 
 class CanonicalizationError(TypeError):
@@ -34,8 +37,6 @@ def _normalize(value: Any) -> Any:
     if value is None:
         return {"$type": "null"}
 
-    # Enum must precede scalar subtype checks because IntEnum/StrEnum members
-    # are also instances of int/str. QIC preserves their declared enum identity.
     if isinstance(value, Enum):
         return {
             "$type": "enum",
@@ -47,7 +48,6 @@ def _normalize(value: Any) -> Any:
     if isinstance(value, bool):
         return {"$type": "bool", "value": value}
 
-    # bool is an int subclass, so this must follow the bool branch.
     if isinstance(value, int):
         return {"$type": "int", "value": str(value)}
 
@@ -136,6 +136,20 @@ def _json_string(value: str) -> bytes:
     ).encode("utf-8")
 
 
+def _encode_plain_int_tuple(value: tuple[int, ...]) -> bytes:
+    """Emit a homogeneous plain-int tuple without per-leaf temporary byte objects."""
+
+    out = bytearray(_INT_TUPLE_PREFIX)
+    for index, item in enumerate(value):
+        if index:
+            out.append(44)
+        out.extend(_INT_PREFIX)
+        out.extend(str(item).encode("ascii"))
+        out.extend(_INT_SUFFIX)
+    out.extend(b']}' )
+    return bytes(out)
+
+
 def _encode_value(value: Any) -> bytes:
     """Emit the G1 normalized JSON bytes directly, avoiding the object tree."""
 
@@ -159,8 +173,6 @@ def _encode_value(value: Any) -> bytes:
         return b'{"$type":"bool","value":true}' if value else b'{"$type":"bool","value":false}'
 
     if isinstance(value, int):
-        # Plain integers dominate the measured G10 hot path. The canonical G1
-        # representation stores the decimal form as a JSON string.
         if type(value) is int:
             return b'{"$type":"int","value":"' + str(value).encode("ascii") + b'"}'
         return b'{"$type":"int","value":' + _json_string(str(value)) + b'}'
@@ -192,6 +204,8 @@ def _encode_value(value: Any) -> bytes:
         )
 
     if isinstance(value, tuple):
+        if all(type(item) is int for item in value):
+            return _encode_plain_int_tuple(value)
         return b'{"$type":"tuple","items":[' + b','.join(_encode_value(item) for item in value) + b']}'
 
     if isinstance(value, list):
@@ -221,9 +235,10 @@ def _encode_value(value: Any) -> bytes:
 def canonical_bytes(value: Any) -> bytes:
     """Return deterministic `QIC-CANONICAL/1.0` UTF-8 bytes for *value*.
 
-    G11 emits the already-declared typed JSON representation directly. The
-    frozen `_canonical_bytes_reference` remains available for byte-for-byte
-    differential qualification but is not used by the production path.
+    G11 emits the declared typed JSON representation directly. G12 adds one
+    measured software specialization for homogeneous plain-int tuples while
+    preserving the frozen G1 byte oracle and the generic G11 path for all other
+    declared types.
     """
 
     return b'{"$canonical":"QIC-CANONICAL/1.0","value":' + _encode_value(value) + b'}'
