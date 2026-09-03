@@ -13,7 +13,8 @@
     "G7": "MERGED",
     "G8": "MERGED",
     "RC0": "MERGED",
-    "G9": "MERGED"
+    "G9": "MERGED",
+    "G10": "ACTIVE"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -35,6 +36,18 @@
     "release_blocking_on_survivor": true,
     "scope": "local structural qualification through G9; durability claims remain limited to the declared reference environment"
   },
+  "performance_observatory": {
+    "slice": "G10",
+    "status": "ACTIVE",
+    "measurement_run": "33719689186",
+    "measured_head": "849c78fd4df5d5c0c0881ef7dfb2f5b20a75f61f",
+    "raw_artifacts": {
+      "python_3_12": "9879769833",
+      "python_3_13": "9879770182"
+    },
+    "first_finding": "G10-BF-001 SERIALIZATION_BOUND for current size-1000 Python canonical.digest path only",
+    "decision": "algorithmic canonicalizer optimization before any hardware accelerator hypothesis"
+  },
   "release": {
     "candidate": "1.0.0rc0",
     "phase": "RC0_QUALIFIED_PUBLICATION_PENDING"
@@ -46,13 +59,14 @@
     "ci_run": "33683360428",
     "scope": "local durable transaction journal and conservative crash-recovery classification"
   },
-  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties only. RC0 reproducible packaging and merged G9 recovery qualification do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, cryptographic identity, federation, distributed consensus, hardware qualification, or universal durable crash recovery.",
+  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties only. Active G10 adds environment-specific software performance observations and one narrowly scoped serialization bottleneck finding; it does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",
     "No physical-control claim",
     "No federation claim",
     "No distributed-consensus claim",
+    "No accelerator implementation or hardware recommendation claim",
     "No universal durable crash-recovery guarantee",
     "No universal-truth claim"
   ]

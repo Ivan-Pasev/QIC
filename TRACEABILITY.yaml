@@ -145,3 +145,44 @@ slices:
       - no automatic transition replay
       - no T4/T5 enablement
       - no federation or physical effect
+  G10:
+    title: Performance Observatory + Workload Atlas + Scaling/Bottleneck Evidence
+    implementation:
+      - qic/observatory.py
+      - qic/performance_evidence.py
+      - qic/performance_campaign.py
+      - qic/workload_atlas.py
+      - scripts/run_g10_campaigns.py
+      - .github/workflows/ci.yml
+    tests:
+      - tests/test_observatory.py
+      - tests/test_performance_evidence.py
+      - tests/test_performance_campaign.py
+      - tests/test_workload_atlas.py
+    evidence:
+      - PERFORMANCE_BASELINE_G10.md
+      - PERFORMANCE_FINDINGS_G10.md
+      - GitHub Actions run 33719689186
+      - artifact 9879769833 / Python 3.12 raw campaign evidence
+      - artifact 9879770182 / Python 3.13 raw campaign evidence
+    measured_finding:
+      id: G10-BF-001
+      class: SERIALIZATION_BOUND
+      scope: current Python canonical.digest path for a 1000-integer tuple only
+      decision: algorithmic canonicalizer optimization before accelerator hypotheses
+    measurement_contract:
+      - warmups explicit and excluded from measured samples
+      - underlying workload result preserved
+      - semantic result identity stable across measured repetitions
+      - raw canonical evidence uses integer/string/fixed-point identity fields
+      - floating statistics are derived non-identity views
+      - atlas binds only live G0-G9 callables and fails closed on symbol drift
+      - environment-specific timings are not cross-platform reproducibility targets
+      - no accelerator without measured bottleneck
+    adr: docs/adr/0012-performance-observatory-and-measurement-evidence.md
+    nonclaims:
+      - no QIC-wide bottleneck claim
+      - no accelerator implementation or hardware recommendation
+      - no T4/T5 enablement
+      - no federation
+      - no formal or hardware maturity increase
