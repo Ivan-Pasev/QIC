@@ -15,7 +15,8 @@
     "RC0": "MERGED",
     "G9": "MERGED",
     "G10": "MERGED",
-    "G11": "MERGED"
+    "G11": "MERGED",
+    "G12": "ACTIVE"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -76,6 +77,32 @@
     "byte_identity": "required and observed across the declared differential corpus",
     "decision": "measured software optimization admitted; no accelerator selected"
   },
+  "residual_canonicalization": {
+    "slice": "G12",
+    "status": "ACTIVE",
+    "issue": 33,
+    "pull_request": 34,
+    "closure_candidate": "one-pass growing-buffer homogeneous plain-int tuple specialization",
+    "closure_candidate_head": "e1bacf31afa3fc76107d394da2aa95c41fee7d53",
+    "characterization_run": "33803524078",
+    "qualified_inherited_run": "33803524089",
+    "raw_characterization_artifacts": {
+      "python_3_12": "9911983142",
+      "python_3_13": "9911984318"
+    },
+    "frozen_reference_artifacts": {
+      "python_3_12": "9911991159",
+      "python_3_13": "9911995303"
+    },
+    "size_1000_vs_frozen_g1_improvement": {
+      "python_3_12_fraction": 0.6608851259256687,
+      "python_3_13_fraction": 0.6323102896220761
+    },
+    "size_1000_peak_traced_bytes": 60608,
+    "byte_identity": "required and observed in differential qualification",
+    "measurement_policy": "timing excludes tracemalloc; allocation uses a separate traced channel; proxy timings are non-attributive",
+    "decision": "one-pass growing-buffer software specialization selected as closure candidate; parts-join rejected as balanced production choice due allocation cost; no accelerator selected"
+  },
   "release": {
     "candidate": "1.0.0rc0",
     "phase": "RC0_QUALIFIED_PUBLICATION_PENDING"
@@ -87,7 +114,7 @@
     "ci_run": "33799603266",
     "scope": "byte-identical direct canonical byte emission with counterbalanced measured improvement and residual serialization evidence"
   },
-  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. Merged G10 adds environment-specific software performance observations and one narrowly scoped serialization bottleneck finding. Merged G11 adds a byte-identical measured software canonicalizer optimization only; it does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
+  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. Merged G10 adds environment-specific software performance observations and one narrowly scoped serialization bottleneck finding. Merged G11 adds a byte-identical measured software canonicalizer optimization. Active G12 adds residual-cost characterization and a byte-identical homogeneous plain-int tuple software specialization closure candidate only. It does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",
