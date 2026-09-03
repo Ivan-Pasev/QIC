@@ -100,6 +100,8 @@ def main() -> int:
         reference_medians = []
         candidate_medians = []
         semantic_digest = None
+        compatibility_reference = None
+        compatibility_candidate = None
         for order_name, sequence in orders:
             pair = []
             for implementation in sequence:
@@ -117,8 +119,10 @@ def main() -> int:
                 pair.append(item)
                 if implementation == "reference":
                     reference_medians.append(item["derived_summary"]["median_ns"])
+                    compatibility_reference = compatibility_reference or item
                 else:
                     candidate_medians.append(item["derived_summary"]["median_ns"])
+                    compatibility_candidate = compatibility_candidate or item
                 semantic_digest = semantic_digest or item["result_digest"]
                 if item["result_digest"] != semantic_digest:
                     raise SystemExit(f"semantic result digest diverged at size={size}")
@@ -147,6 +151,8 @@ def main() -> int:
             {
                 "size": size,
                 "byte_identity": True,
+                "reference": compatibility_reference,
+                "candidate": compatibility_candidate,
                 "orders": order_records,
                 "digest": digest_item,
                 "derived_reference_median_ns": reference_median,
@@ -159,7 +165,8 @@ def main() -> int:
         )
 
     manifest = {
-        "format": "QIC-G11-CANONICAL-COMPARISON-MANIFEST/2.0",
+        "format": "QIC-G11-CANONICAL-COMPARISON-MANIFEST/1.0",
+        "measurement_revision": "counterbalanced-v2",
         "claim_boundary": CLAIM_BOUNDARY,
         "environment": {**asdict(environment), "digest": environment.digest},
         "warmups": args.warmups,
