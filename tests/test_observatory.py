@@ -4,6 +4,17 @@ from dataclasses import replace
 
 import pytest
 
+from qic.core import (
+    AuthorityDomain,
+    AuthorityGrant,
+    AuthorityRequirement,
+    StateSnapshot,
+    TransitionEngine,
+    TransitionFailure,
+    TransitionFamily,
+    TransitionProposal,
+    TransitionSpec,
+)
 from qic.observatory import (
     MeasurementClass,
     PerformanceEnvironment,
@@ -163,3 +174,61 @@ def test_workload_descriptor_rejects_zero_sized_work() -> None:
             operations_per_run=1,
             assurance_profile="FULL",
         )
+
+
+def test_observatory_does_not_disable_constitutional_authority_gate() -> None:
+    state = StateSnapshot(revision=0, entries=(("counter", "0"),))
+    requirement = AuthorityRequirement(
+        domains=frozenset({AuthorityDomain.COMPUTATIONAL}),
+        capabilities=frozenset({"state.increment"}),
+        resources=frozenset({"state.counter"}),
+    )
+    spec = TransitionSpec(
+        operation="state.increment",
+        family=TransitionFamily.COMPUTATIONAL,
+        authority=requirement,
+    )
+
+    def rule(current: StateSnapshot, proposal: TransitionProposal) -> StateSnapshot:
+        return StateSnapshot(revision=current.revision + 1, entries=(("counter", "1"),))
+
+    engine = TransitionEngine(specs=(spec,), rules={"state.increment": rule})
+    proposal = TransitionProposal(
+        proposal_id="g10-denied",
+        actor="bench-worker",
+        operation="state.increment",
+        expected_state_digest=state.digest,
+    )
+    wrong_grant = AuthorityGrant(
+        grant_id="wrong-domain",
+        subject="bench-worker",
+        issuer="qic.root",
+        domains=frozenset({AuthorityDomain.EPISTEMIC}),
+        capabilities=frozenset({"state.increment"}),
+        resources=frozenset({"state.counter"}),
+    )
+
+    observed = PerformanceObservatory(environment()).run(
+        WorkloadDescriptor(
+            workload_id="G10.TEST.AUTHORITY_DENIAL",
+            title="Measured authority denial",
+            measurement_class=MeasurementClass.END_TO_END,
+            size=1,
+            operations_per_run=1,
+            assurance_profile="FULL_CONSTITUTIONAL_PATH",
+        ),
+        lambda: engine.execute(state=state, proposal=proposal, grant=wrong_grant),
+        result_identity=lambda outcome: (
+            outcome.accepted,
+            outcome.failure,
+            outcome.before_digest,
+            outcome.after_digest,
+        ),
+        warmups=1,
+        repetitions=3,
+    )
+
+    assert observed.result.accepted is False
+    assert observed.result.failure is TransitionFailure.AUTHORITY_DENIED
+    assert observed.result.after_state is state
+    assert len({sample.result_digest for sample in observed.samples}) == 1
