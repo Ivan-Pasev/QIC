@@ -29,6 +29,8 @@ def _type_name(value: object) -> str:
 
 
 def _normalize(value: Any) -> Any:
+    """Frozen G1 object-tree normalization retained as the G11 reference path."""
+
     if value is None:
         return {"$type": "null"}
 
@@ -113,14 +115,118 @@ def _encode_normalized(value: Any) -> bytes:
     ).encode("utf-8")
 
 
-def canonical_bytes(value: Any) -> bytes:
-    """Return deterministic `QIC-CANONICAL/1.0` UTF-8 bytes for *value*."""
+def _canonical_bytes_reference(value: Any) -> bytes:
+    """Frozen pre-G11 implementation used only for differential qualification."""
 
     envelope = {
         "$canonical": CANONICAL_VERSION,
         "value": _normalize(value),
     }
     return _encode_normalized(envelope)
+
+
+def _json_string(value: str) -> bytes:
+    """Encode one JSON string with the exact G1 escaping policy."""
+
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+
+
+def _encode_value(value: Any) -> bytes:
+    """Emit the G1 normalized JSON bytes directly, avoiding the object tree."""
+
+    if value is None:
+        return b'{"$type":"null"}'
+
+    if isinstance(value, Enum):
+        return b''.join(
+            (
+                b'{"$type":"enum","class":',
+                _json_string(_type_name(value)),
+                b',"name":',
+                _json_string(value.name),
+                b',"value":',
+                _encode_value(value.value),
+                b'}',
+            )
+        )
+
+    if isinstance(value, bool):
+        return b'{"$type":"bool","value":true}' if value else b'{"$type":"bool","value":false}'
+
+    if isinstance(value, int):
+        # Plain integers dominate the measured G10 hot path. The canonical G1
+        # representation stores the decimal form as a JSON string.
+        if type(value) is int:
+            return b'{"$type":"int","value":"' + str(value).encode("ascii") + b'"}'
+        return b'{"$type":"int","value":' + _json_string(str(value)) + b'}'
+
+    if isinstance(value, float):
+        raise CanonicalizationError(
+            "floats are not supported by QIC-CANONICAL/1.0; use an explicit "
+            "future numeric policy rather than platform-dependent float text"
+        )
+
+    if isinstance(value, str):
+        return b'{"$type":"str","value":' + _json_string(value) + b'}'
+
+    if isinstance(value, bytes):
+        return b'{"$type":"bytes","hex":"' + value.hex().encode("ascii") + b'"}'
+
+    if is_dataclass(value) and not isinstance(value, type):
+        encoded_fields: list[bytes] = []
+        for field in sorted(fields(value), key=lambda item: item.name):
+            encoded_fields.append(_json_string(field.name) + b':' + _encode_value(getattr(value, field.name)))
+        return b''.join(
+            (
+                b'{"$type":"dataclass","class":',
+                _json_string(_type_name(value)),
+                b',"fields":{',
+                b','.join(encoded_fields),
+                b'}}',
+            )
+        )
+
+    if isinstance(value, tuple):
+        return b'{"$type":"tuple","items":[' + b','.join(_encode_value(item) for item in value) + b']}'
+
+    if isinstance(value, list):
+        return b'{"$type":"list","items":[' + b','.join(_encode_value(item) for item in value) + b']}'
+
+    if isinstance(value, (set, frozenset)):
+        encoded_items = sorted(_encode_value(item) for item in value)
+        kind = b'frozenset' if isinstance(value, frozenset) else b'set'
+        return b'{"$type":"' + kind + b'","items":[' + b','.join(encoded_items) + b']}'
+
+    if isinstance(value, Mapping):
+        if not all(isinstance(key, str) for key in value):
+            raise CanonicalizationError(
+                "mapping keys must be strings in QIC-CANONICAL/1.0"
+            )
+        encoded_items = [
+            _json_string(key) + b':' + _encode_value(value[key])
+            for key in sorted(value)
+        ]
+        return b'{"$type":"mapping","items":{' + b','.join(encoded_items) + b'}}'
+
+    raise CanonicalizationError(
+        f"unsupported canonical type: {_type_name(value)}"
+    )
+
+
+def canonical_bytes(value: Any) -> bytes:
+    """Return deterministic `QIC-CANONICAL/1.0` UTF-8 bytes for *value*.
+
+    G11 emits the already-declared typed JSON representation directly. The
+    frozen `_canonical_bytes_reference` remains available for byte-for-byte
+    differential qualification but is not used by the production path.
+    """
+
+    return b'{"$canonical":"QIC-CANONICAL/1.0","value":' + _encode_value(value) + b'}'
 
 
 def canonical_text(value: Any) -> str:
