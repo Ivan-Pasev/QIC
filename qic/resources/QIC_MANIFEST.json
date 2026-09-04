@@ -16,7 +16,7 @@
     "G9": "MERGED",
     "G10": "MERGED",
     "G11": "MERGED",
-    "G12": "ACTIVE"
+    "G12": "MERGED"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -46,10 +46,6 @@
     "qualified_head": "d9e279cd494cd481dbbfeaec8ee4279dd1854276",
     "qualified_run": "33720658546",
     "merge_commit": "4d3d6896091c3b70355168d549ea172f1f92e0c7",
-    "raw_artifacts": {
-      "python_3_12": "9879769833",
-      "python_3_13": "9879770182"
-    },
     "first_finding": "G10-BF-001 SERIALIZATION_BOUND for current size-1000 Python canonical.digest path only",
     "decision": "algorithmic canonicalizer optimization before any hardware accelerator hypothesis"
   },
@@ -58,42 +54,22 @@
     "status": "MERGED",
     "candidate": "direct typed-JSON byte emission preserving QIC-CANONICAL/1.0",
     "measurement_run": "33798799289",
-    "measured_head": "e3d0f2b612be1861dd66a87e345d35695466c595",
     "qualified_head": "17975bcd1659c216404a7d8f5319877dc155ed19",
     "qualified_run": "33799603266",
     "merge_commit": "554e8f0ea6c2a5a187a5cb675a9d25e8fd8da70b",
-    "raw_artifacts": {
-      "python_3_12": "9910239274",
-      "python_3_13": "9910240220"
-    },
-    "size_1000_improvement": {
-      "python_3_12_fraction": 0.44235474742407155,
-      "python_3_13_fraction": 0.4461512086213463
-    },
-    "size_1000_residual_serialization_share_ppm": {
-      "python_3_12": 950296,
-      "python_3_13": 947894
-    },
     "byte_identity": "required and observed across the declared differential corpus",
     "decision": "measured software optimization admitted; no accelerator selected"
   },
   "residual_canonicalization": {
     "slice": "G12",
-    "status": "ACTIVE",
+    "status": "MERGED",
     "issue": 33,
     "pull_request": 34,
-    "closure_candidate": "one-pass growing-buffer homogeneous plain-int tuple specialization",
-    "closure_candidate_head": "e1bacf31afa3fc76107d394da2aa95c41fee7d53",
-    "characterization_run": "33803524078",
-    "qualified_inherited_run": "33803524089",
-    "raw_characterization_artifacts": {
-      "python_3_12": "9911983142",
-      "python_3_13": "9911984318"
-    },
-    "frozen_reference_artifacts": {
-      "python_3_12": "9911991159",
-      "python_3_13": "9911995303"
-    },
+    "qualified_head": "e44a2ac56b4ca53b6babe5d05e532a1743f66520",
+    "full_ci_run": "33804645433",
+    "profile_run": "33804645371",
+    "merge_commit": "2c558c0550c1f8d7db7591ad7b3fe523795bd2dc",
+    "selected_specialization": "one-pass growing-buffer homogeneous plain-int tuple specialization",
     "size_1000_vs_frozen_g1_improvement": {
       "python_3_12_fraction": 0.6608851259256687,
       "python_3_13_fraction": 0.6323102896220761
@@ -101,20 +77,20 @@
     "size_1000_peak_traced_bytes": 60608,
     "byte_identity": "required and observed in differential qualification",
     "measurement_policy": "timing excludes tracemalloc; allocation uses a separate traced channel; proxy timings are non-attributive",
-    "decision": "one-pass growing-buffer software specialization selected as closure candidate; parts-join rejected as balanced production choice due allocation cost; no accelerator selected"
+    "decision": "byte-identical one-pass growing-buffer software specialization merged; high-allocation parts-join candidate rejected; no native or hardware accelerator selected"
   },
   "release": {
     "candidate": "1.0.0rc0",
     "phase": "RC0_QUALIFIED_PUBLICATION_PENDING"
   },
   "last_completed_engineering": {
-    "slice": "G11",
-    "merge_commit": "554e8f0ea6c2a5a187a5cb675a9d25e8fd8da70b",
-    "qualified_head": "17975bcd1659c216404a7d8f5319877dc155ed19",
-    "ci_run": "33799603266",
-    "scope": "byte-identical direct canonical byte emission with counterbalanced measured improvement and residual serialization evidence"
+    "slice": "G12",
+    "merge_commit": "2c558c0550c1f8d7db7591ad7b3fe523795bd2dc",
+    "qualified_head": "e44a2ac56b4ca53b6babe5d05e532a1743f66520",
+    "ci_run": "33804645433",
+    "scope": "environment-specific residual canonicalization characterization and byte-identical homogeneous plain-int tuple specialization"
   },
-  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. Merged G10 adds environment-specific software performance observations and one narrowly scoped serialization bottleneck finding. Merged G11 adds a byte-identical measured software canonicalizer optimization. Active G12 adds residual-cost characterization and a byte-identical homogeneous plain-int tuple software specialization closure candidate only. It does not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
+  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. G10-G12 add environment-specific software performance evidence and measured byte-identical canonicalizer optimizations only. They do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",
