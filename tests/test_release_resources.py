@@ -40,6 +40,7 @@ def test_release_manifest_keeps_constitutional_nonclaims() -> None:
     assert manifest["implementation_sequence"]["G9"] == "MERGED"
     assert manifest["implementation_sequence"]["G10"] == "MERGED"
     assert manifest["implementation_sequence"]["G11"] == "MERGED"
+    assert manifest["implementation_sequence"]["G12"] == "MERGED"
     assert manifest["release"]["phase"] == "RC0_QUALIFIED_PUBLICATION_PENDING"
     assert manifest["transition_profile"]["not_enabled"] == ["T4", "T5"]
     assert manifest["maturity"] == {
@@ -51,7 +52,10 @@ def test_release_manifest_keeps_constitutional_nonclaims() -> None:
     }
     assert "No universal durable crash-recovery guarantee" in manifest["explicit_nonclaims"]
     assert "No accelerator implementation or hardware recommendation claim" in manifest["explicit_nonclaims"]
-    assert manifest["last_completed_engineering"]["slice"] == "G11"
+    assert manifest["last_completed_engineering"]["slice"] == "G12"
+    assert manifest["last_completed_engineering"]["merge_commit"] == "2c558c0550c1f8d7db7591ad7b3fe523795bd2dc"
+    assert manifest["residual_canonicalization"]["status"] == "MERGED"
+    assert manifest["residual_canonicalization"]["full_ci_run"] == "33804645433"
     assert manifest["algorithmic_optimization"]["status"] == "MERGED"
     assert manifest["algorithmic_optimization"]["qualified_run"] == "33799603266"
     assert manifest["performance_observatory"]["status"] == "MERGED"
