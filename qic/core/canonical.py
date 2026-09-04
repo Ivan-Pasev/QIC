@@ -17,6 +17,10 @@ from typing import Any, Final, Mapping
 
 
 CANONICAL_VERSION: Final[str] = "QIC-CANONICAL/1.0"
+_CANONICAL_PREFIX: Final[bytes] = b'{"$canonical":"QIC-CANONICAL/1.0","value":'
+_INT_TUPLE_PREFIX: Final[bytes] = b'{"$type":"tuple","items":['
+_INT_PREFIX: Final[bytes] = b'{"$type":"int","value":"'
+_INT_SUFFIX: Final[bytes] = b'"}'
 
 
 class CanonicalizationError(TypeError):
@@ -33,76 +37,40 @@ def _normalize(value: Any) -> Any:
 
     if value is None:
         return {"$type": "null"}
-
-    # Enum must precede scalar subtype checks because IntEnum/StrEnum members
-    # are also instances of int/str. QIC preserves their declared enum identity.
     if isinstance(value, Enum):
-        return {
-            "$type": "enum",
-            "class": _type_name(value),
-            "name": value.name,
-            "value": _normalize(value.value),
-        }
-
+        return {"$type": "enum", "class": _type_name(value), "name": value.name, "value": _normalize(value.value)}
     if isinstance(value, bool):
         return {"$type": "bool", "value": value}
-
-    # bool is an int subclass, so this must follow the bool branch.
     if isinstance(value, int):
         return {"$type": "int", "value": str(value)}
-
     if isinstance(value, float):
         raise CanonicalizationError(
             "floats are not supported by QIC-CANONICAL/1.0; use an explicit "
             "future numeric policy rather than platform-dependent float text"
         )
-
     if isinstance(value, str):
         return {"$type": "str", "value": value}
-
     if isinstance(value, bytes):
         return {"$type": "bytes", "hex": value.hex()}
-
     if is_dataclass(value) and not isinstance(value, type):
         return {
             "$type": "dataclass",
             "class": _type_name(value),
-            "fields": {
-                field.name: _normalize(getattr(value, field.name))
-                for field in fields(value)
-            },
+            "fields": {field.name: _normalize(getattr(value, field.name)) for field in fields(value)},
         }
-
     if isinstance(value, tuple):
         return {"$type": "tuple", "items": [_normalize(item) for item in value]}
-
     if isinstance(value, list):
         return {"$type": "list", "items": [_normalize(item) for item in value]}
-
     if isinstance(value, (set, frozenset)):
         normalized_items = [_normalize(item) for item in value]
         normalized_items.sort(key=_encode_normalized)
-        return {
-            "$type": "frozenset" if isinstance(value, frozenset) else "set",
-            "items": normalized_items,
-        }
-
+        return {"$type": "frozenset" if isinstance(value, frozenset) else "set", "items": normalized_items}
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
-            raise CanonicalizationError(
-                "mapping keys must be strings in QIC-CANONICAL/1.0"
-            )
-        return {
-            "$type": "mapping",
-            "items": {
-                key: _normalize(value[key])
-                for key in sorted(value)
-            },
-        }
-
-    raise CanonicalizationError(
-        f"unsupported canonical type: {_type_name(value)}"
-    )
+            raise CanonicalizationError("mapping keys must be strings in QIC-CANONICAL/1.0")
+        return {"$type": "mapping", "items": {key: _normalize(value[key]) for key in sorted(value)}}
+    raise CanonicalizationError(f"unsupported canonical type: {_type_name(value)}")
 
 
 def _encode_normalized(value: Any) -> bytes:
@@ -118,11 +86,7 @@ def _encode_normalized(value: Any) -> bytes:
 def _canonical_bytes_reference(value: Any) -> bytes:
     """Frozen pre-G11 implementation used only for differential qualification."""
 
-    envelope = {
-        "$canonical": CANONICAL_VERSION,
-        "value": _normalize(value),
-    }
-    return _encode_normalized(envelope)
+    return _encode_normalized({"$canonical": CANONICAL_VERSION, "value": _normalize(value)})
 
 
 def _json_string(value: str) -> bytes:
@@ -136,97 +100,118 @@ def _json_string(value: str) -> bytes:
     ).encode("utf-8")
 
 
+def _try_append_plain_int_tuple(out: bytearray, value: tuple[object, ...]) -> bool:
+    """Append a homogeneous plain-int tuple in one pass or roll back fully."""
+
+    start = len(out)
+    out.extend(_INT_TUPLE_PREFIX)
+    for index, item in enumerate(value):
+        if type(item) is not int:
+            del out[start:]
+            return False
+        if index:
+            out.append(44)
+        out.extend(_INT_PREFIX)
+        out.extend(str(item).encode("ascii"))
+        out.extend(_INT_SUFFIX)
+    out.extend(b']}')
+    return True
+
+
+def _encode_plain_int_tuple(value: tuple[int, ...]) -> bytes:
+    """Emit a homogeneous plain-int tuple without per-leaf temporary byte objects."""
+
+    out = bytearray()
+    if not _try_append_plain_int_tuple(out, value):
+        raise TypeError("plain-int tuple encoder received a non-int element")
+    return bytes(out)
+
+
+def _canonical_plain_int_tuple(value: tuple[int, ...]) -> bytes:
+    """Emit a top-level homogeneous plain-int tuple in one growing buffer."""
+
+    out = bytearray(_CANONICAL_PREFIX)
+    if not _try_append_plain_int_tuple(out, value):
+        raise TypeError("plain-int tuple encoder received a non-int element")
+    out.append(125)
+    return bytes(out)
+
+
 def _encode_value(value: Any) -> bytes:
     """Emit the G1 normalized JSON bytes directly, avoiding the object tree."""
 
     if value is None:
         return b'{"$type":"null"}'
-
     if isinstance(value, Enum):
-        return b''.join(
-            (
-                b'{"$type":"enum","class":',
-                _json_string(_type_name(value)),
-                b',"name":',
-                _json_string(value.name),
-                b',"value":',
-                _encode_value(value.value),
-                b'}',
-            )
-        )
-
+        return b''.join((
+            b'{"$type":"enum","class":',
+            _json_string(_type_name(value)),
+            b',"name":',
+            _json_string(value.name),
+            b',"value":',
+            _encode_value(value.value),
+            b'}',
+        ))
     if isinstance(value, bool):
         return b'{"$type":"bool","value":true}' if value else b'{"$type":"bool","value":false}'
-
     if isinstance(value, int):
-        # Plain integers dominate the measured G10 hot path. The canonical G1
-        # representation stores the decimal form as a JSON string.
         if type(value) is int:
             return b'{"$type":"int","value":"' + str(value).encode("ascii") + b'"}'
         return b'{"$type":"int","value":' + _json_string(str(value)) + b'}'
-
     if isinstance(value, float):
         raise CanonicalizationError(
             "floats are not supported by QIC-CANONICAL/1.0; use an explicit "
             "future numeric policy rather than platform-dependent float text"
         )
-
     if isinstance(value, str):
         return b'{"$type":"str","value":' + _json_string(value) + b'}'
-
     if isinstance(value, bytes):
         return b'{"$type":"bytes","hex":"' + value.hex().encode("ascii") + b'"}'
-
     if is_dataclass(value) and not isinstance(value, type):
         encoded_fields: list[bytes] = []
         for field in sorted(fields(value), key=lambda item: item.name):
             encoded_fields.append(_json_string(field.name) + b':' + _encode_value(getattr(value, field.name)))
-        return b''.join(
-            (
-                b'{"$type":"dataclass","class":',
-                _json_string(_type_name(value)),
-                b',"fields":{',
-                b','.join(encoded_fields),
-                b'}}',
-            )
-        )
-
+        return b''.join((
+            b'{"$type":"dataclass","class":',
+            _json_string(_type_name(value)),
+            b',"fields":{',
+            b','.join(encoded_fields),
+            b'}}',
+        ))
     if isinstance(value, tuple):
+        int_tuple = bytearray()
+        if _try_append_plain_int_tuple(int_tuple, value):
+            return bytes(int_tuple)
         return b'{"$type":"tuple","items":[' + b','.join(_encode_value(item) for item in value) + b']}'
-
     if isinstance(value, list):
         return b'{"$type":"list","items":[' + b','.join(_encode_value(item) for item in value) + b']}'
-
     if isinstance(value, (set, frozenset)):
         encoded_items = sorted(_encode_value(item) for item in value)
         kind = b'frozenset' if isinstance(value, frozenset) else b'set'
         return b'{"$type":"' + kind + b'","items":[' + b','.join(encoded_items) + b']}'
-
     if isinstance(value, Mapping):
         if not all(isinstance(key, str) for key in value):
-            raise CanonicalizationError(
-                "mapping keys must be strings in QIC-CANONICAL/1.0"
-            )
-        encoded_items = [
-            _json_string(key) + b':' + _encode_value(value[key])
-            for key in sorted(value)
-        ]
+            raise CanonicalizationError("mapping keys must be strings in QIC-CANONICAL/1.0")
+        encoded_items = [_json_string(key) + b':' + _encode_value(value[key]) for key in sorted(value)]
         return b'{"$type":"mapping","items":{' + b','.join(encoded_items) + b'}}'
-
-    raise CanonicalizationError(
-        f"unsupported canonical type: {_type_name(value)}"
-    )
+    raise CanonicalizationError(f"unsupported canonical type: {_type_name(value)}")
 
 
 def canonical_bytes(value: Any) -> bytes:
     """Return deterministic `QIC-CANONICAL/1.0` UTF-8 bytes for *value*.
 
-    G11 emits the already-declared typed JSON representation directly. The
-    frozen `_canonical_bytes_reference` remains available for byte-for-byte
-    differential qualification but is not used by the production path.
+    G11 emits the declared typed JSON representation directly. G12 adds one
+    measured software specialization for homogeneous plain-int tuples while
+    preserving the frozen G1 byte oracle and the generic G11 path for all other
+    declared types.
     """
 
-    return b'{"$canonical":"QIC-CANONICAL/1.0","value":' + _encode_value(value) + b'}'
+    if isinstance(value, tuple):
+        out = bytearray(_CANONICAL_PREFIX)
+        if _try_append_plain_int_tuple(out, value):
+            out.append(125)
+            return bytes(out)
+    return _CANONICAL_PREFIX + _encode_value(value) + b'}'
 
 
 def canonical_text(value: Any) -> str:
