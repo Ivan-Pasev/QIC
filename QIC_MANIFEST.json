@@ -17,7 +17,7 @@
     "G10": "MERGED",
     "G11": "MERGED",
     "G12": "MERGED",
-    "G13": "ACTIVE"
+    "G13": "MERGED"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -84,23 +84,26 @@
   },
   "canonical_workload_generalization": {
     "slice": "G13",
-    "status": "ACTIVE",
+    "status": "MERGED",
     "issue": 37,
     "pull_request": 38,
     "frozen_baseline": "b966b9e3e5d2271612343276b32833d721a99128",
-    "evidence_head": "4ed7641b96d2825fd678bf2aa34c648f9902b372",
-    "workload_atlas_run": "33860326769",
+    "qualified_head": "9c7370a6ceacf77c846df5fc74c88a358297e107",
+    "workload_atlas_run": "33860813207",
+    "full_ci_run": "33860813177",
+    "merge_commit": "a826d51848a66825131406538429ed929a112ce5",
     "raw_artifacts": {
-      "python_3_12": "9931846180",
-      "python_3_13": "9931850907"
+      "python_3_12": "9932031167",
+      "python_3_13": "9932032188"
     },
     "artifact_digests": {
-      "python_3_12": "sha256:d3e77bd8dcf5c67a1ac5da9e54d4b9fd80c2625b460750d4c1a5b93bb6ba7f68",
-      "python_3_13": "sha256:6a545e96c66de91f0777eec4234596a3bac568cf8f636db7a12e0ea11cdd2637"
+      "python_3_12": "sha256:95cc24cc9d0b6ae20bbad8a3e5e08e729f28b28c1245069ebe475240e41ef5a4",
+      "python_3_13": "sha256:a752263cc163d2eced72a535a1e880a02e8bf313de7f1ee05ea1fe6b991ceb7f"
     },
     "families": 10,
     "records_per_environment": 30,
     "byte_identity": "required and observed for every declared payload-family/size record",
+    "reference_characterization_run": "33860326769",
     "size_1000_plain_int_tuple_median_ns": {
       "python_3_12": 266512,
       "python_3_13": 241218
@@ -110,20 +113,20 @@
       "python_3_13": 8434895
     },
     "size_1000_dataclass_peak_traced_bytes": 483782,
-    "decision": "characterization-only; no production change; dataclass metadata/type-name/field-name work selected as next measured software investigation hypothesis; no native or hardware accelerator selected"
+    "decision": "characterization-only merge; no production change; dataclass metadata/type-name/field-name work selected as next measured Python-level investigation hypothesis; no native or hardware accelerator selected"
   },
   "release": {
     "candidate": "1.0.0rc0",
     "phase": "RC0_QUALIFIED_PUBLICATION_PENDING"
   },
   "last_completed_engineering": {
-    "slice": "G12",
-    "merge_commit": "2c558c0550c1f8d7db7591ad7b3fe523795bd2dc",
-    "qualified_head": "e44a2ac56b4ca53b6babe5d05e532a1743f66520",
-    "ci_run": "33804645433",
-    "scope": "environment-specific residual canonicalization characterization and byte-identical homogeneous plain-int tuple specialization"
+    "slice": "G13",
+    "merge_commit": "a826d51848a66825131406538429ed929a112ce5",
+    "qualified_head": "9c7370a6ceacf77c846df5fc74c88a358297e107",
+    "ci_run": "33860813177",
+    "scope": "environment- and payload-family-specific canonical workload generalization characterization; no production runtime change"
   },
-  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. G10-G12 add environment-specific software performance evidence and measured byte-identical canonicalizer optimizations. Active G13 adds payload-family-specific canonicalization characterization only and no production runtime change. These do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
+  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. G10-G12 add environment-specific software performance evidence and measured byte-identical canonicalizer optimizations. G13 adds payload-family-specific canonicalization characterization only and no production runtime change. These do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",

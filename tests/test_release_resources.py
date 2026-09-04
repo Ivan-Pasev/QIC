@@ -35,12 +35,8 @@ def test_package_version_matches_project_metadata_and_release_manifest() -> None
 
 def test_release_manifest_keeps_constitutional_nonclaims() -> None:
     manifest = resource_json("QIC_MANIFEST.json")
-    assert manifest["implementation_sequence"]["G8"] == "MERGED"
-    assert manifest["implementation_sequence"]["RC0"] == "MERGED"
-    assert manifest["implementation_sequence"]["G9"] == "MERGED"
-    assert manifest["implementation_sequence"]["G10"] == "MERGED"
-    assert manifest["implementation_sequence"]["G11"] == "MERGED"
-    assert manifest["implementation_sequence"]["G12"] == "MERGED"
+    for slice_id in ("G8", "RC0", "G9", "G10", "G11", "G12", "G13"):
+        assert manifest["implementation_sequence"][slice_id] == "MERGED"
     assert manifest["release"]["phase"] == "RC0_QUALIFIED_PUBLICATION_PENDING"
     assert manifest["transition_profile"]["not_enabled"] == ["T4", "T5"]
     assert manifest["maturity"] == {
@@ -52,8 +48,12 @@ def test_release_manifest_keeps_constitutional_nonclaims() -> None:
     }
     assert "No universal durable crash-recovery guarantee" in manifest["explicit_nonclaims"]
     assert "No accelerator implementation or hardware recommendation claim" in manifest["explicit_nonclaims"]
-    assert manifest["last_completed_engineering"]["slice"] == "G12"
-    assert manifest["last_completed_engineering"]["merge_commit"] == "2c558c0550c1f8d7db7591ad7b3fe523795bd2dc"
+    assert manifest["last_completed_engineering"]["slice"] == "G13"
+    assert manifest["last_completed_engineering"]["merge_commit"] == "a826d51848a66825131406538429ed929a112ce5"
+    assert manifest["canonical_workload_generalization"]["status"] == "MERGED"
+    assert manifest["canonical_workload_generalization"]["qualified_head"] == "9c7370a6ceacf77c846df5fc74c88a358297e107"
+    assert manifest["canonical_workload_generalization"]["full_ci_run"] == "33860813177"
+    assert manifest["canonical_workload_generalization"]["workload_atlas_run"] == "33860813207"
     assert manifest["residual_canonicalization"]["status"] == "MERGED"
     assert manifest["residual_canonicalization"]["full_ci_run"] == "33804645433"
     assert manifest["algorithmic_optimization"]["status"] == "MERGED"

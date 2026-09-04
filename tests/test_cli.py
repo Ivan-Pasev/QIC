@@ -107,14 +107,8 @@ def test_registry_and_constitution_commands_are_read_only_surfaces(capsys) -> No
 
 def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     manifest = json.loads((ROOT / "QIC_MANIFEST.json").read_text(encoding="utf-8"))
-    assert manifest["implementation_sequence"]["G6"] == "MERGED"
-    assert manifest["implementation_sequence"]["G7"] == "MERGED"
-    assert manifest["implementation_sequence"]["G8"] == "MERGED"
-    assert manifest["implementation_sequence"]["RC0"] == "MERGED"
-    assert manifest["implementation_sequence"]["G9"] == "MERGED"
-    assert manifest["implementation_sequence"]["G10"] == "MERGED"
-    assert manifest["implementation_sequence"]["G11"] == "MERGED"
-    assert manifest["implementation_sequence"]["G12"] == "MERGED"
+    for slice_id in ("G6", "G7", "G8", "RC0", "G9", "G10", "G11", "G12", "G13"):
+        assert manifest["implementation_sequence"][slice_id] == "MERGED"
     assert manifest["release"]["phase"] == "RC0_QUALIFIED_PUBLICATION_PENDING"
     assert manifest["transition_profile"]["enabled"] == [
         family.value for family in sorted(ENABLED_FAMILIES, key=lambda item: item.value)
@@ -131,14 +125,18 @@ def test_manifest_matches_runtime_and_does_not_inflate_maturity() -> None:
     assert "No formal-runtime verification claim" in manifest["explicit_nonclaims"]
     assert "No hardware-tested claim" in manifest["explicit_nonclaims"]
     assert "No universal durable crash-recovery guarantee" in manifest["explicit_nonclaims"]
-    assert manifest["last_completed_engineering"]["slice"] == "G12"
-    assert manifest["last_completed_engineering"]["merge_commit"] == "2c558c0550c1f8d7db7591ad7b3fe523795bd2dc"
+    assert manifest["last_completed_engineering"]["slice"] == "G13"
+    assert manifest["last_completed_engineering"]["merge_commit"] == "a826d51848a66825131406538429ed929a112ce5"
     assert manifest["performance_observatory"]["status"] == "MERGED"
     assert manifest["performance_observatory"]["qualified_run"] == "33720658546"
     assert manifest["algorithmic_optimization"]["status"] == "MERGED"
     assert manifest["algorithmic_optimization"]["qualified_run"] == "33799603266"
     assert manifest["residual_canonicalization"]["status"] == "MERGED"
     assert manifest["residual_canonicalization"]["full_ci_run"] == "33804645433"
+    assert manifest["canonical_workload_generalization"]["status"] == "MERGED"
+    assert manifest["canonical_workload_generalization"]["qualified_head"] == "9c7370a6ceacf77c846df5fc74c88a358297e107"
+    assert manifest["canonical_workload_generalization"]["full_ci_run"] == "33860813177"
+    assert manifest["canonical_workload_generalization"]["workload_atlas_run"] == "33860813207"
     claim_boundary = manifest["claim_boundary"]
     assert "certify semantic truth" in claim_boundary
     assert "universal durable crash recovery" in claim_boundary
