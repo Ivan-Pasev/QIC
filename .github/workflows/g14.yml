@@ -1,0 +1,65 @@
+name: G14 Dataclass Decomposition
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/run_g14_dataclass_decomposition.py"
+      - "qic/core/canonical.py"
+      - ".github/workflows/g14.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  g14-dataclass-decomposition:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install QIC
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Run G14 Phase-A dataclass decomposition
+        run: |
+          python scripts/run_g14_dataclass_decomposition.py \
+            --output g14-dataclass-decomposition \
+            --warmups 2 \
+            --repetitions 9 \
+            --sizes 10 100 1000
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path("g14-dataclass-decomposition/manifest.json").read_text())
+          assert manifest["format"] == "QIC-G14-DATACLASS-DECOMPOSITION/1.0"
+          assert len(manifest["records"]) == 12
+          assert all(record["byte_identity"] is True for record in manifest["records"])
+          assert all(record["full_tuple_canonical"]["timing_ns"]["count"] == 9 for record in manifest["records"])
+          assert all(record["full_tuple_canonical"]["traced_peak_bytes"]["count"] == 9 for record in manifest["records"])
+          assert "non-additive and non-attributive" in manifest["measurement_policy"]["proxy_semantics"]
+          assert "no production canonicalizer change" in manifest["claim_boundary"].lower()
+          assert "metadata_prepare_repeated" in manifest["records"][0]["proxies"]
+          assert "metadata_reuse_proxy" in manifest["records"][0]["proxies"]
+          print(f"records={len(manifest['records'])}; env={manifest['environment']['digest']}")
+          PY
+
+      - name: Upload G14 raw decomposition evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qic-g14-dataclass-decomposition-py${{ matrix.python-version }}
+          path: g14-dataclass-decomposition/*
+          if-no-files-found: error
