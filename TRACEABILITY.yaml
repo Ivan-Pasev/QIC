@@ -272,7 +272,7 @@ slices:
       - no maturity increase
   G13:
     title: Canonical Workload Generalization Atlas
-    status: ACTIVE
+    status: MERGED
     implementation:
       - scripts/run_g13_workload_atlas.py
       - .github/workflows/g13.yml
@@ -280,11 +280,13 @@ slices:
       - qic/resources/QIC_MANIFEST.json
     evidence:
       - PERFORMANCE_CHARACTERIZATION_G13.md
-      - GitHub Actions workload-atlas run 33860326769
-      - artifact 9931846180 / Python 3.12 workload matrix
-      - artifact 9931850907 / Python 3.13 workload matrix
-      - artifact digest sha256:d3e77bd8dcf5c67a1ac5da9e54d4b9fd80c2625b460750d4c1a5b93bb6ba7f68 / Python 3.12
-      - artifact digest sha256:6a545e96c66de91f0777eec4234596a3bac568cf8f636db7a12e0ea11cdd2637 / Python 3.13
+      - GitHub Actions exact-head workload-atlas run 33860813207
+      - GitHub Actions exact-head inherited CI run 33860813177
+      - artifact 9932031167 / Python 3.12 final workload matrix
+      - artifact 9932032188 / Python 3.13 final workload matrix
+      - artifact digest sha256:95cc24cc9d0b6ae20bbad8a3e5e08e729f28b28c1245069ebe475240e41ef5a4 / Python 3.12
+      - artifact digest sha256:a752263cc163d2eced72a535a1e880a02e8bf313de7f1ee05ea1fe6b991ceb7f / Python 3.13
+      - implementation merge a826d51848a66825131406538429ed929a112ce5
     measurement_contract:
       - ten deterministic payload families across sizes 10, 100, and 1000
       - timing excludes tracemalloc
@@ -292,12 +294,12 @@ slices:
       - every declared payload is compared to frozen G1 canonical bytes
       - no independent-timing subtraction as exact nested attribution
     measured_result:
-      - size-1000 plain-int tuple median 266512 ns on Python 3.12 and 241218 ns on Python 3.13
-      - size-1000 dataclass tuple median 8887552 ns on Python 3.12 and 8434895 ns on Python 3.13
+      - size-1000 reference characterization plain-int tuple median 266512 ns on Python 3.12 and 241218 ns on Python 3.13
+      - size-1000 reference characterization dataclass tuple median 8887552 ns on Python 3.12 and 8434895 ns on Python 3.13
       - size-1000 dataclass tuple traced peak allocation 483782 bytes
       - all declared family-size records preserved exact frozen-G1 byte identity
     decision:
-      - characterization only; no production canonicalizer change
+      - characterization-only merge; no production canonicalizer change
       - do not continue plain-int tuple micro-polishing from this evidence
       - dataclass metadata/type-name/field-name work is the strongest next measured Python-level investigation hypothesis
       - no native or hardware accelerator selected
