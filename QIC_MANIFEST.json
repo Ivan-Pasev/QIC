@@ -16,7 +16,8 @@
     "G9": "MERGED",
     "G10": "MERGED",
     "G11": "MERGED",
-    "G12": "MERGED"
+    "G12": "MERGED",
+    "G13": "ACTIVE"
   },
   "transition_profile": {
     "enabled": ["T0", "T1", "T2", "T3"],
@@ -69,6 +70,8 @@
     "full_ci_run": "33804645433",
     "profile_run": "33804645371",
     "merge_commit": "2c558c0550c1f8d7db7591ad7b3fe523795bd2dc",
+    "post_merge_seal_commit": "b966b9e3e5d2271612343276b32833d721a99128",
+    "post_merge_seal_run": "33859982342",
     "selected_specialization": "one-pass growing-buffer homogeneous plain-int tuple specialization",
     "size_1000_vs_frozen_g1_improvement": {
       "python_3_12_fraction": 0.6608851259256687,
@@ -78,6 +81,36 @@
     "byte_identity": "required and observed in differential qualification",
     "measurement_policy": "timing excludes tracemalloc; allocation uses a separate traced channel; proxy timings are non-attributive",
     "decision": "byte-identical one-pass growing-buffer software specialization merged; high-allocation parts-join candidate rejected; no native or hardware accelerator selected"
+  },
+  "canonical_workload_generalization": {
+    "slice": "G13",
+    "status": "ACTIVE",
+    "issue": 37,
+    "pull_request": 38,
+    "frozen_baseline": "b966b9e3e5d2271612343276b32833d721a99128",
+    "evidence_head": "4ed7641b96d2825fd678bf2aa34c648f9902b372",
+    "workload_atlas_run": "33860326769",
+    "raw_artifacts": {
+      "python_3_12": "9931846180",
+      "python_3_13": "9931850907"
+    },
+    "artifact_digests": {
+      "python_3_12": "sha256:d3e77bd8dcf5c67a1ac5da9e54d4b9fd80c2625b460750d4c1a5b93bb6ba7f68",
+      "python_3_13": "sha256:6a545e96c66de91f0777eec4234596a3bac568cf8f636db7a12e0ea11cdd2637"
+    },
+    "families": 10,
+    "records_per_environment": 30,
+    "byte_identity": "required and observed for every declared payload-family/size record",
+    "size_1000_plain_int_tuple_median_ns": {
+      "python_3_12": 266512,
+      "python_3_13": 241218
+    },
+    "size_1000_dataclass_tuple_median_ns": {
+      "python_3_12": 8887552,
+      "python_3_13": 8434895
+    },
+    "size_1000_dataclass_peak_traced_bytes": 483782,
+    "decision": "characterization-only; no production change; dataclass metadata/type-name/field-name work selected as next measured software investigation hypothesis; no native or hardware accelerator selected"
   },
   "release": {
     "candidate": "1.0.0rc0",
@@ -90,7 +123,7 @@
     "ci_run": "33804645433",
     "scope": "environment-specific residual canonicalization characterization and byte-identical homogeneous plain-int tuple specialization"
   },
-  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. G10-G12 add environment-specific software performance evidence and measured byte-identical canonicalizer optimizations only. They do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
+  "claim_boundary": "QIC G0-G9 verification and qualification establish declared local structural and reference durability/restart properties. G10-G12 add environment-specific software performance evidence and measured byte-identical canonicalizer optimizations. Active G13 adds payload-family-specific canonicalization characterization only and no production runtime change. These do not certify semantic truth, production security, formal correctness, physical safety, legal compliance, broad deployment readiness, federation, distributed consensus, hardware qualification, accelerator readiness, or universal durable crash recovery.",
   "explicit_nonclaims": [
     "No formal-runtime verification claim",
     "No hardware-tested claim",

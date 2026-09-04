@@ -1,0 +1,65 @@
+name: G13 Canonical Workload Atlas
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/run_g13_workload_atlas.py"
+      - "qic/core/canonical.py"
+      - "qic/core/digest.py"
+      - ".github/workflows/g13.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  g13-workload-atlas:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install QIC
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Run G13 canonical workload atlas
+        run: |
+          python scripts/run_g13_workload_atlas.py \
+            --output g13-workload-atlas \
+            --warmups 2 \
+            --repetitions 9 \
+            --sizes 10 100 1000
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path("g13-workload-atlas/manifest.json").read_text())
+          assert manifest["format"] == "QIC-G13-WORKLOAD-ATLAS/1.0"
+          assert len(manifest["records"]) == 30
+          assert all(record["byte_identity"] is True for record in manifest["records"])
+          assert all(record["canonical_bytes"]["timing_ns"]["count"] == 9 for record in manifest["records"])
+          assert all(record["canonical_bytes"]["traced_peak_bytes"]["count"] == 9 for record in manifest["records"])
+          assert all(record["digest_hex"]["timing_ns"]["count"] == 9 for record in manifest["records"])
+          assert "tracemalloc disabled" in manifest["measurement_policy"]["timing"]
+          assert "no native extension" in manifest["claim_boundary"].lower()
+          print(f"records={len(manifest['records'])}; env={manifest['environment']['digest']}")
+          PY
+
+      - name: Upload G13 raw workload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qic-g13-workload-atlas-py${{ matrix.python-version }}
+          path: g13-workload-atlas/*
+          if-no-files-found: error

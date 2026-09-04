@@ -222,7 +222,7 @@ slices:
       - no maturity increase
   G12:
     title: Residual Canonicalization Characterization + Plain-Integer Tuple Specialization
-    status: ACTIVE
+    status: MERGED
     implementation:
       - qic/core/canonical.py
       - scripts/run_g12_residual_profile.py
@@ -234,12 +234,11 @@ slices:
       - inherited G1/G8/G9/G10/G11/RC0 suites
     evidence:
       - PERFORMANCE_CHARACTERIZATION_G12.md
-      - GitHub Actions G12 run 33803524078
-      - artifact 9911983142 / Python 3.12 final residual profile
-      - artifact 9911984318 / Python 3.13 final residual profile
-      - GitHub Actions inherited CI run 33803524089
-      - artifact 9911991159 / Python 3.12 frozen-G1 comparison
-      - artifact 9911995303 / Python 3.13 frozen-G1 comparison
+      - GitHub Actions G12 exact-head run 33804645371
+      - GitHub Actions inherited exact-head CI run 33804645433
+      - implementation merge 2c558c0550c1f8d7db7591ad7b3fe523795bd2dc
+      - post-merge state-seal merge b966b9e3e5d2271612343276b32833d721a99128
+      - post-merge state-seal CI run 33859982342
     measurement_contract:
       - timing and allocation are measured in separate channels
       - tracemalloc-contaminated timing evidence is rejected
@@ -255,12 +254,12 @@ slices:
     measured_result:
       - size-1000 current-vs-frozen-G1 Python 3.12 median improvement 66.09 percent
       - size-1000 current-vs-frozen-G1 Python 3.13 median improvement 63.23 percent
-      - size-1000 traced peak allocation reduced from about 180884 bytes to 60608 bytes
+      - size-1000 traced peak allocation reduced from about 180884 bytes to about 60608 bytes
       - Python 3.12 bounded residual serialization-share estimate 92.87 percent
       - Python 3.13 serialization-share estimate withheld because independent digest median was below serializer median
     decision:
-      - select one-pass growing-buffer homogeneous plain-int tuple specialization as G12 closure candidate
-      - reject flattened-parts candidate as balanced production choice because of about 418707-byte peak allocation
+      - merged one-pass growing-buffer homogeneous plain-int tuple specialization
+      - reject flattened-parts candidate as balanced production choice because of high peak allocation
       - no native or hardware accelerator selected
     adr: docs/adr/0014-residual-canonicalization-and-int-tuple-specialization.md
     nonclaims:
@@ -268,6 +267,46 @@ slices:
       - no portable performance guarantee
       - no exact nested proxy attribution
       - no accelerator implementation or hardware recommendation
+      - no T4/T5 enablement
+      - no federation
+      - no maturity increase
+  G13:
+    title: Canonical Workload Generalization Atlas
+    status: ACTIVE
+    implementation:
+      - scripts/run_g13_workload_atlas.py
+      - .github/workflows/g13.yml
+      - QIC_MANIFEST.json
+      - qic/resources/QIC_MANIFEST.json
+    evidence:
+      - PERFORMANCE_CHARACTERIZATION_G13.md
+      - GitHub Actions workload-atlas run 33860326769
+      - artifact 9931846180 / Python 3.12 workload matrix
+      - artifact 9931850907 / Python 3.13 workload matrix
+      - artifact digest sha256:d3e77bd8dcf5c67a1ac5da9e54d4b9fd80c2625b460750d4c1a5b93bb6ba7f68 / Python 3.12
+      - artifact digest sha256:6a545e96c66de91f0777eec4234596a3bac568cf8f636db7a12e0ea11cdd2637 / Python 3.13
+    measurement_contract:
+      - ten deterministic payload families across sizes 10, 100, and 1000
+      - timing excludes tracemalloc
+      - allocation uses a separate traced channel
+      - every declared payload is compared to frozen G1 canonical bytes
+      - no independent-timing subtraction as exact nested attribution
+    measured_result:
+      - size-1000 plain-int tuple median 266512 ns on Python 3.12 and 241218 ns on Python 3.13
+      - size-1000 dataclass tuple median 8887552 ns on Python 3.12 and 8434895 ns on Python 3.13
+      - size-1000 dataclass tuple traced peak allocation 483782 bytes
+      - all declared family-size records preserved exact frozen-G1 byte identity
+    decision:
+      - characterization only; no production canonicalizer change
+      - do not continue plain-int tuple micro-polishing from this evidence
+      - dataclass metadata/type-name/field-name work is the strongest next measured Python-level investigation hypothesis
+      - no native or hardware accelerator selected
+    adr: docs/adr/0015-canonical-workload-generalization.md
+    nonclaims:
+      - no representative production workload-frequency claim
+      - no portable performance guarantee
+      - no causal attribution from median nanoseconds per encoded byte
+      - no native extension or accelerator implementation/recommendation
       - no T4/T5 enablement
       - no federation
       - no maturity increase
